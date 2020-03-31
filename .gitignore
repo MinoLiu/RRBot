@@ -1,0 +1,4 @@
+chromeData*
+.vscode
+__pycache__
+*.log
