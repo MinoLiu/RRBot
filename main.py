@@ -148,9 +148,7 @@ class RRBot:
                 "class": "perk_source_2"
             }).text)
         counter = soup.find("div", {"id": "perk_counter_2"})
-        try:
-            LOG.info('Upgrading time {}'.format(counter.text))
-        except AttributeError:
+        if counter is None:
             if self.just_upgrade in ["STR", "EDU", "END"]:
                 self.upgrade(self.just_upgrade)
             else:

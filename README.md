@@ -33,6 +33,6 @@ optional arguments:
 ```
 
 ```
-$ python main.py -l GOOGLE -p GOOGLE_ACCOUNT -u RRCash -f
-$ python main.py -l FB -p FB_ACCOUNT -u RRCash -f
+$ pipenv run python main.py -l GOOGLE -p GOOGLE_ACCOUNT -u RRCash -f
+$ pipenv run python main.py -l FB -p FB_ACCOUNT -u RRCash -f
 ```
