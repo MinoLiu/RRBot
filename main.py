@@ -36,7 +36,7 @@ class RRBot:
                  profile="default",
                  just_upgrade=None,
                  first_login=False):
-        self.uri = "https://rivalregions.com"
+        self.uri = "https://rivalregions.com/#overview"
         options = webdriver.ChromeOptions()
         options.add_argument("user-data-dir={}".format(
             os.path.join(os.path.abspath(os.getcwd()),
@@ -131,6 +131,8 @@ class RRBot:
         self.idle()
 
     def idle(self):
+        self.driver.get(self.uri)
+        self.sleep(5)
         soup = BeautifulSoup(self.driver.page_source, "html5lib")
         self.perks['STR'] = int(
             soup.find("div", {
