@@ -7,6 +7,7 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.by import By
 import os, time, argparse
 from bs4 import BeautifulSoup
+from random import randint
 import logging
 
 logging.basicConfig(level=logging.INFO,
@@ -37,7 +38,13 @@ class RRBot:
                  just_upgrade=None,
                  first_login=False,
                  proxy=None):
-        self.uri = "https://rivalregions.com/#overview"
+        self.uri = {
+            'host': "https://rivalregions.com",
+            'overview': "https://rivalregions.com/#overview",
+            'work': "https://rivalregions.com/#work",
+            'war': "https://rivalregions.com/#war"
+        }
+
         options = webdriver.ChromeOptions()
         options.add_argument("user-data-dir={}".format(
             os.path.join(os.path.abspath(os.getcwd()),
@@ -53,6 +60,12 @@ class RRBot:
         self.first_login = first_login
         self.perks = {}
         self.login()
+        self.sleep(5)
+
+    def start(self):
+        while (True):
+            self.idle()
+            self.sleep()
 
     def refresh(self):
         self.driver.refresh()
@@ -65,19 +78,18 @@ class RRBot:
         self.sleep(10)
         try:
             self.driver.execute_script('return c_html')
-            self.idle()
         except JavascriptException as err:
             LOG.debug(err.msg)
             self.login()
 
-    def sleep(self, sec):
+    def sleep(self, sec=randint(10, 30)):
         if (sec >= 120):
             LOG.info("Wait for {:.1f} minutes".format(sec / 60.0))
         time.sleep(sec)
 
     def login(self):
-        self.driver.get(self.uri)
-        self.sleep(5)
+        self.driver.get(self.uri['host'])
+        self.driver.implicitly_wait(10)
         button = None
         xpath = None
         try:
@@ -118,8 +130,6 @@ class RRBot:
             button1 = self.driver.find_element_by_xpath(xpath)
         except NoSuchElementException as err:
             LOG.debug(err.msg)
-            self.refresh()
-            return
 
         action = ActionChains(self.driver)
         action.move_to_element(button1).click(button1).perform()
@@ -130,11 +140,10 @@ class RRBot:
                                                  self.perks[perk_name],
                                                  self.perks[perk_name] + 1))
         self.sleep(5)
-        self.idle()
 
-    def idle(self):
-        self.driver.get(self.uri)
-        self.sleep(5)
+    def calculate_perk_time(self):
+        self.driver.get(self.uri['overview'])
+        self.driver.implicitly_wait(10)
         soup = BeautifulSoup(self.driver.page_source, "html5lib")
         self.perks['STR'] = int(
             soup.find("div", {
@@ -151,13 +160,17 @@ class RRBot:
                 "perk": "3",
                 "class": "perk_source_2"
             }).text)
-        counter = soup.find("div", {"id": "perk_counter_2"})
-        if counter is None:
+        return soup.find("div", {"id": "perk_counter_2"})
+
+    def idle(self):
+        self.refresh()
+        if self.calculate_perk_time() is None:
             if self.just_upgrade in ["STR", "EDU", "END"]:
                 self.upgrade(self.just_upgrade)
             else:
-                self.upgrade_stratge()
-        else:
+                self.upgrade_strategy()
+
+        if counter := self.calculate_perk_time():
             t = counter.text
             if (len(t) == 8):  #format: 00:00:00
                 self.sleep(3600 * int(t[0:2:1]) + 60 * int(t[3:5:1]) +
@@ -165,9 +178,7 @@ class RRBot:
             elif (len(t) == 5):  #format: 00:00
                 self.sleep(60 * int(t[0:2:1]) + int(t[3:5:1]))
 
-            self.refresh()
-
-    def upgrade_stratge(self):
+    def upgrade_strategy(self):
         STR = self.perks['STR']
         EDU = self.perks['EDU']
         END = self.perks['END']
@@ -231,4 +242,4 @@ if __name__ == '__main__':
     if (args.login_method is None):
         parser.print_help()
     else:
-        RRBot(**vars(args))
+        RRBot(**vars(args)).start()
