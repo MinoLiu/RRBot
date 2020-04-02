@@ -35,12 +35,15 @@ class RRBot:
                  use_to_upgrade="RRCash",
                  profile="default",
                  just_upgrade=None,
-                 first_login=False):
+                 first_login=False,
+                 proxy=None):
         self.uri = "https://rivalregions.com/#overview"
         options = webdriver.ChromeOptions()
         options.add_argument("user-data-dir={}".format(
             os.path.join(os.path.abspath(os.getcwd()),
                          'chromeData_' + profile)))
+        if proxy:
+            options.add_argument('--proxy-server={}'.format(proxy))
 
         self.driver = webdriver.Chrome(chrome_options=options)
         self.driver.maximize_window()
@@ -62,7 +65,6 @@ class RRBot:
         self.sleep(10)
         try:
             self.driver.execute_script('return c_html')
-            LOG.info("login success")
             self.idle()
         except JavascriptException as err:
             LOG.debug(err.msg)
@@ -218,6 +220,12 @@ if __name__ == '__main__':
                         help="預設為False, True將會等待60秒讓使用者登入",
                         action="store_true",
                         dest='first_login')
+
+    parser.add_argument(
+        "--proxy",
+        help=
+        "請先去確認proxy活著 正確格式如下: socks5://localhost:1080, https://localhost:1080",
+        dest='proxy')
 
     args = parser.parse_args()
     if (args.login_method is None):

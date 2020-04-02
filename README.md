@@ -30,9 +30,16 @@ optional arguments:
   -j JUST_UPGRADE, --just_upgrade JUST_UPGRADE
                         生級指定選項 'STR'、'EDU'、'END' 不指定將會使用Discord社群推薦的配點
   -f, --first_login     預設為False, True將會等待60秒讓使用者登入
+  --proxy PROXY         請先去確認proxy活著 正確格式如下: socks5://localhost:1080, https://localhost:1080
 ```
 
 ```
 $ pipenv run python main.py -l GOOGLE -p GOOGLE_ACCOUNT -u RRCash -f
 $ pipenv run python main.py -l FB -p FB_ACCOUNT -u RRCash -f
+```
+
+Use proxy
+
+```
+pipenv run python main.py -l GOOGLE -p GOOGLE_ACCOUNT -u RRCash --proxy socks5://localhost:1080
 ```
