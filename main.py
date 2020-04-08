@@ -45,4 +45,9 @@ if __name__ == '__main__':
     if (args.login_method is None):
         parser.print_help()
     else:
-        RRBot(**vars(args)).start()
+        while (True):
+            r = RRBot(**vars(args))
+            try:
+                r.start()
+            except Exception:
+                r.close()

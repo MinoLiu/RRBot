@@ -50,7 +50,6 @@ class RRBot:
             options.add_argument('--proxy-server={}'.format(proxy))
 
         self.driver = webdriver.Chrome(chrome_options=options)
-        self.driver.maximize_window()
         self.login_method = login_method
         
         self.use_to_upgrade = use_to_upgrade
@@ -75,7 +74,6 @@ class RRBot:
 
     def refresh(self):
         self.driver.refresh()
-        self.check_login()
 
     def close(self):
         self.driver.close()
@@ -151,6 +149,7 @@ class RRBot:
     def calculate_perk_time(self):
         self.driver.get(self.uri['overview'])
         self.driver.implicitly_wait(10)
+        self.refresh()
         self.sleep(5)
         soup = BeautifulSoup(self.driver.page_source, "html5lib")
         self.perks['STR'] = int(
@@ -178,6 +177,7 @@ class RRBot:
 
     def idle(self):
         self.refresh()
+        self.check_login()
         if self.calculate_perk_time() == 0:
             if self.upgrade_perk is not None:
                 self.upgrade(self.upgrade_perk)
