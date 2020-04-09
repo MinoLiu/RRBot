@@ -1,4 +1,5 @@
-from app.rrbot import RRBot
+from app.rrbot import RRBot, PoorBot
+from app import LOG
 import argparse
 
 if __name__ == '__main__':
@@ -28,6 +29,10 @@ if __name__ == '__main__':
                         action="store_true",
                         dest='first_login')
 
+    parser.add_argument("--poor",
+                        help="你是窮人, 你買不起高級會員, 你必須手動挖礦、軍演, 可憐阿 我來幫你",
+                        action="store_true")
+
     parser.add_argument(
         "--headless",
         help=
@@ -46,8 +51,14 @@ if __name__ == '__main__':
         parser.print_help()
     else:
         while (True):
-            r = RRBot(**vars(args))
+            r = None
+            if args.poor == True:
+                r = PoorBot(**vars(args))
+            else:
+                r = RRBot(**vars(args))
             try:
                 r.start()
-            except Exception:
-                r.close()
+                break
+            except Exception as err:
+                LOG.info(err)
+                r.quit()

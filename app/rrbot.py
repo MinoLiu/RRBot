@@ -3,11 +3,12 @@ from random import randint
 from bs4 import BeautifulSoup
 
 from app import LOG
-from app.upgrade import Perk
+from app import utils
+from app.utils import Perk
 from selenium import webdriver
-from selenium.common.exceptions import NoSuchElementException, JavascriptException
+from selenium.common.exceptions import JavascriptException
 from selenium.webdriver.common.action_chains import ActionChains
-from selenium.webdriver.support.ui import WebDriverWait as wait
+from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.by import By
 
@@ -29,12 +30,13 @@ class RRBot:
                  upgrade_perk=None,
                  first_login=False,
                  proxy=None,
-                 headless=None):
+                 headless=None,
+                 poor=None
+                 ):
+
         self.uri = {
             'host': "https://rivalregions.com",
-            'overview': "https://rivalregions.com/#overview",
-            'work': "https://rivalregions.com/#work",
-            'war': "https://rivalregions.com/#war"
+            'overview': "https://rivalregions.com/#overview"
         }
 
         options = webdriver.ChromeOptions()
@@ -50,8 +52,9 @@ class RRBot:
             options.add_argument('--proxy-server={}'.format(proxy))
 
         self.driver = webdriver.Chrome(chrome_options=options)
+        self.driver.implicitly_wait(10)
+
         self.login_method = login_method
-        
         self.use_to_upgrade = use_to_upgrade
         if upgrade_perk == "STR":
             self.upgrade_perk = Perk.STR
@@ -64,27 +67,42 @@ class RRBot:
 
         self.first_login = first_login
         self.perks = {}
-        self.login()
-        self.sleep(5)
+        self.driver.get(self.uri['host'])
+        self.check_login()
 
     def start(self):
         while (True):
             self.idle()
             self.sleep()
 
+
+    def move_and_click(self, by, what, delay=3, wait=10):
+        """
+
+        : param by: (By)     By.ID、By.XPATH ...
+        : param what: (str)  id、xpath ...
+        : param delay: (int)
+        ex:
+            self.move_and_click(By.ID, "OOF")
+        """
+        WebDriverWait(self.driver, wait).until(EC.presence_of_element_located((by, what)))
+        button = self.driver.find_element(by, what)
+        action = ActionChains(self.driver)
+        action.move_to_element(button).click(button).perform()
+        self.sleep(delay)
+
+
     def refresh(self):
         self.driver.refresh()
 
-    def close(self):
-        self.driver.close()
+    def quit(self):
+        self.driver.quit()
 
     def check_login(self):
-        self.driver.implicitly_wait(10)
         self.sleep(10)
         try:
             self.driver.execute_script('return c_html')
         except JavascriptException as err:
-            LOG.debug(err.msg)
             self.login()
 
     def sleep(self, sec=randint(10, 30)):
@@ -94,63 +112,42 @@ class RRBot:
 
     def login(self):
         self.driver.get(self.uri['host'])
-        self.driver.implicitly_wait(10)
         button = None
         xpath = None
-        try:
-            if self.login_method == "FB":
-                xpath = '//*[@id="sa_add2"]/div[2]/a[1]/div'
-            elif self.login_method == "VK":
-                xpath = '//*[@id="sa_add2"]/div[2]/a[3]/div'
-            else:
-                xpath = '//*[@id="sa_add2"]/div[2]/a[2]/div'
-
-            button = self.driver.find_element_by_xpath(xpath)
-        except NoSuchElementException as err:
-            LOG.debug(err.msg)
+        if self.login_method == "FB":
+            xpath = '//*[@id="sa_add2"]/div[2]/a[1]/div'
+        elif self.login_method == "VK":
+            xpath = '//*[@id="sa_add2"]/div[2]/a[3]/div'
         else:
-            action = ActionChains(self.driver)
-            action.move_to_element(button).perform()
-            subaction = wait(self.driver, 10).until(
-                EC.element_to_be_clickable((By.XPATH, xpath)))
-            subaction.click()
-            LOG.info("click login button")
-            if self.first_login:
-                self.sleep(60)
-                self.first_login = False
+            xpath = '//*[@id="sa_add2"]/div[2]/a[2]/div'
+            
+        self.move_and_click(By.XPATH, xpath)
+        LOG.info("click login button")
+        if self.first_login:
+            self.sleep(60)
+            self.first_login = False
 
         self.check_login()
 
     def upgrade(self, perk):
         xpath = None
         upgrade_xpath = '//*[@id="perk_target_4"]/div[1]/div[1]/div' if self.use_to_upgrade != "GOLD" else '//*[@id="perk_target_4"]/div[2]/div[1]/div'
-        button = None
-        try:
-            if perk == Perk.STR:
-                xpath = '//*[@id="index_perks_list"]/div[4]'
-            elif perk == Perk.EDU:
-                xpath = '//*[@id="index_perks_list"]/div[5]'
-            elif perk == Perk.END:
-                xpath = '//*[@id="index_perks_list"]/div[6]'
-            button = self.driver.find_element_by_xpath(xpath)
-        except NoSuchElementException as err:
-            LOG.debug(err.msg)
+        if perk == Perk.STR:
+            xpath = '//*[@id="index_perks_list"]/div[4]'
+        elif perk == Perk.EDU:
+            xpath = '//*[@id="index_perks_list"]/div[5]'
+        elif perk == Perk.END:
+            xpath = '//*[@id="index_perks_list"]/div[6]'
 
-        action = ActionChains(self.driver)
-        action.move_to_element(button).click(button).perform()
-        subaction = wait(self.driver, 10).until(
-            EC.element_to_be_clickable((By.XPATH, upgrade_xpath)))
-        subaction.click()
+        self.move_and_click(By.XPATH, xpath)
+        self.move_and_click(By.XPATH, upgrade_xpath)
+
         LOG.info("Upgrading {}: {} -> {}".format(perk.name,
                                                  self.perks[perk.name],
                                                  self.perks[perk.name] + 1))
         self.sleep(5)
 
     def calculate_perk_time(self):
-        self.driver.get(self.uri['overview'])
-        self.driver.implicitly_wait(10)
-        self.refresh()
-        self.sleep(5)
         soup = BeautifulSoup(self.driver.page_source, "html5lib")
         self.perks['STR'] = int(
             soup.find("div", {
@@ -167,17 +164,18 @@ class RRBot:
                 "perk": "3",
                 "class": "perk_source_2"
             }).text)
-        if counter := soup.find("div", {"id": "perk_counter_2"}):
-            t = counter.text
-            if (len(t) == 8):  #format: 00:00:00
-                return 3600 * int(t[0:2:1]) + 60 * int(t[3:5:1]) + int(t[6:8:1])
-            elif (len(t) == 5):  #format: 00:00
-                return 60 * int(t[0:2:1]) + int(t[3:5:1])
+        if countdown := soup.find("div", {"id": "perk_counter_2"}):
+            return utils.convert_str_time(countdown.text)
+
         return 0
 
     def idle(self):
         self.refresh()
         self.check_login()
+
+        self.driver.get(self.uri['overview'])
+        self.refresh()
+        self.sleep(5)
         if self.calculate_perk_time() == 0:
             if self.upgrade_perk is not None:
                 self.upgrade(self.upgrade_perk)
@@ -185,5 +183,81 @@ class RRBot:
                 perk = Perk.perk_strategy(**self.perks)
                 self.upgrade(perk)
 
+        self.driver.get(self.uri['overview'])
+        self.refresh()
+        self.sleep(5)
         if time := self.calculate_perk_time():
                 self.sleep(time)
+
+
+
+class PoorBot(RRBot):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+    
+    def check_gold(self):
+        """
+        Must be work page
+        """
+        soup = BeautifulSoup(self.driver.page_source, "html5lib")
+        gold = float(soup.find("span", {"class":"imp yellow tip"}).text)
+
+        return gold
+
+    def check_energy(self):
+        soup = BeautifulSoup(self.driver.page_source, "html5lib")
+        energy = int(soup.find("span", {"id":"s"}).text)
+        sec = 0
+
+        if countdown := soup.find("span", {"id":"header_my_fill_bar_countdown"}):
+            sec = utils.convert_str_time(countdown.text)
+
+        return energy, sec
+
+    def check_perk(self):
+        self.move_and_click(By.XPATH, "//div[@action='main/content']", 5)
+        if self.calculate_perk_time() == 0:
+            if self.upgrade_perk is not None:
+                self.upgrade(self.upgrade_perk)
+            else:
+                perk = Perk.perk_strategy(**self.perks)
+                self.upgrade(perk)
+
+    def check_war(self):
+        self.move_and_click(By.XPATH, "//div[@action='main/content']", 5)
+        soup = BeautifulSoup(self.driver.page_source, "html5lib")
+        if countdown := soup.find("span", {"class": "small tip dot pointer war_index_war_countdown hasCountdown"}):
+            if (t := utils.convert_str_time(countdown.text)) > 0:
+                return t
+        
+        self.move_and_click(By.XPATH, "//div[@action='war']")
+        self.move_and_click(By.CLASS_NAME, "war_4_start")
+        self.move_and_click(By.CLASS_NAME, "war_w_send_ok")
+        self.move_and_click(By.ID, "slide_close")
+
+
+    def mining(self):
+        self.move_and_click(By.XPATH, "//div[@action='work']")
+
+        energy, sec = self.check_energy()
+        gold = self.check_gold()
+
+        if gold > 0 and energy >= 10:
+            self.move_and_click(By.XPATH, "//div[@class='work_factory_button button_blue']", 5)
+            self.move_and_click(By.ID, "slide_close")
+        elif gold > 0 and sec == 0:
+            self.move_and_click(By.ID, "header_my_fill_bar")
+        else:
+            return sec
+
+        return self.mining()
+
+
+    def idle(self):
+        self.check_war()
+        sec = self.mining()
+        self.check_perk()
+        if sec == 0:
+            self.sleep(600)
+        else:
+            self.sleep(sec)

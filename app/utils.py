@@ -35,3 +35,16 @@ class Perk(Enum):
             else:
                 perk = Perk.STR
         return perk if perk is not None else Perk.STR
+
+
+def convert_str_time(t):
+    """
+    : t: (str)    Format: 00:00:00 or 00:00
+    """
+    t = t.strip()
+    if (len(t) == 8):
+        return 3600 * int(t[0:2:1]) + 60 * int(t[3:5:1]) + int(t[6:8:1])
+    elif (len(t) == 5):
+        return 60 * int(t[0:2:1]) + int(t[3:5:1])
+
+    raise AttributeError("'{}', Format Error".format(t))
