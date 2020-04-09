@@ -223,6 +223,13 @@ class PoorBot(RRBot):
                 perk = Perk.perk_strategy(**self.perks)
                 self.upgrade(perk)
 
+    def check_travel(self):
+        self.move_and_click(By.XPATH, "//div[@action='main/content']", 5)
+        soup = BeautifulSoup(self.driver.page_source, "html5lib")
+        if soup.find("div", {"class":"button_red pointer map_d_b_ind index_registartion_home"}):
+            return True
+        return False
+
     def check_war(self):
         self.move_and_click(By.XPATH, "//div[@action='main/content']", 5)
         soup = BeautifulSoup(self.driver.page_source, "html5lib")
@@ -234,10 +241,14 @@ class PoorBot(RRBot):
         self.move_and_click(By.CLASS_NAME, "war_4_start")
         self.move_and_click(By.CLASS_NAME, "war_w_send_ok")
         self.move_and_click(By.ID, "slide_close")
-
+        
 
     def mining(self):
         self.move_and_click(By.XPATH, "//div[@action='work']")
+        soup = BeautifulSoup(self.driver.page_source, "html5lib")
+        if soup.find("div", {"class": "work_factory_button button_blue"}) is None:
+            LOG.info("Working is not possible")
+            return 600
 
         energy, sec = self.check_energy()
         gold = self.check_gold()
@@ -248,14 +259,19 @@ class PoorBot(RRBot):
         elif gold > 0 and sec == 0:
             self.move_and_click(By.ID, "header_my_fill_bar")
         else:
+            if gold == 0 or energy >= 10:
+                LOG.info("Lack of gold or other problems")
             return sec
 
         return self.mining()
 
 
     def idle(self):
-        self.check_war()
-        sec = self.mining()
+        sec = 0
+        if not self.check_travel():
+            self.check_war()
+            sec = self.mining()
+
         self.check_perk()
         if sec == 0:
             self.sleep(600)

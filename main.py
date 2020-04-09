@@ -30,7 +30,7 @@ if __name__ == '__main__':
                         dest='first_login')
 
     parser.add_argument("--poor",
-                        help="你是窮人, 你買不起高級會員, 你必須手動挖礦、軍演, 可憐阿 我來幫你",
+                        help="你是窮人, 你買不起高級會員, 你必須手動挖礦、軍演, 可憐哪 我來幫你",
                         action="store_true")
 
     parser.add_argument(
