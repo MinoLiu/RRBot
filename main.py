@@ -1,6 +1,19 @@
-from app.rrbot import RRBot, PoorBot
-from app import LOG
 import argparse
+import logging
+from logging import handlers
+
+
+def initLog(profile):
+    logging.basicConfig(level=logging.INFO,
+                        format='%(asctime)s %(levelname)s %(message)s',
+                        datefmt='%Y-%m-%d %H:%M',
+                        handlers=[
+                            logging.StreamHandler(),
+                            handlers.RotatingFileHandler(
+                                '{}.log'.format(profile), "w",
+                                1024 * 1024 * 100, 3, "utf-8")
+                        ])
+
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
@@ -50,6 +63,10 @@ if __name__ == '__main__':
     if (args.login_method is None):
         parser.print_help()
     else:
+        initLog(args.profile)
+        from app import LOG
+        from app.rrbot import RRBot, PoorBot
+
         while (True):
             r = None
             if args.poor == True:

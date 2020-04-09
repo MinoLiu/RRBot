@@ -259,7 +259,7 @@ class PoorBot(RRBot):
         elif gold > 0 and sec == 0:
             self.move_and_click(By.ID, "header_my_fill_bar")
         else:
-            if gold == 0 or energy >= 10:
+            if gold == 0 or energy >= 10 or sec == 0:
                 LOG.info("Lack of gold or other problems")
             return sec
 
