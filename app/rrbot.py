@@ -71,6 +71,7 @@ class RRBot:
         self.check_login()
 
     def start(self):
+        LOG.info('Bot start')
         while (True):
             self.idle()
             self.sleep()
@@ -245,13 +246,14 @@ class PoorBot(RRBot):
 
     def mining(self):
         self.move_and_click(By.XPATH, "//div[@action='work']")
+
+        energy, sec = self.check_energy()
+        gold = self.check_gold()
+
         soup = BeautifulSoup(self.driver.page_source, "html5lib")
         if soup.find("div", {"class": "work_factory_button button_blue"}) is None:
             LOG.info("Working is not possible")
             return 600
-
-        energy, sec = self.check_energy()
-        gold = self.check_gold()
 
         if gold > 0 and energy >= 10:
             self.move_and_click(By.XPATH, "//div[@class='work_factory_button button_blue']", 5)
