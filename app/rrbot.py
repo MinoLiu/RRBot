@@ -74,7 +74,7 @@ class RRBot:
         LOG.info('Bot start')
         while (True):
             self.idle()
-            self.sleep()
+            self.sleep(5)
 
 
     def move_and_click(self, by, what, delay=3, wait=10):
@@ -146,7 +146,6 @@ class RRBot:
         LOG.info("Upgrading {}: {} -> {}".format(perk.name,
                                                  self.perks[perk.name],
                                                  self.perks[perk.name] + 1))
-        self.sleep(5)
 
     def calculate_perk_time(self):
         soup = BeautifulSoup(self.driver.page_source, "html5lib")
@@ -217,12 +216,15 @@ class PoorBot(RRBot):
 
     def check_perk(self):
         self.move_and_click(By.XPATH, "//div[@action='main/content']", 5)
-        if self.calculate_perk_time() == 0:
+        if (t := self.calculate_perk_time()) == 0:
             if self.upgrade_perk is not None:
                 self.upgrade(self.upgrade_perk)
             else:
                 perk = Perk.perk_strategy(**self.perks)
                 self.upgrade(perk)
+            return 600
+        else:
+            return t
 
     def check_travel(self):
         self.move_and_click(By.XPATH, "//div[@action='main/content']", 5)
@@ -237,11 +239,13 @@ class PoorBot(RRBot):
         if countdown := soup.find("span", {"class": "small tip dot pointer war_index_war_countdown hasCountdown"}):
             if (t := utils.convert_str_time(countdown.text)) > 0:
                 return t
-        
-        self.move_and_click(By.XPATH, "//div[@action='war']")
-        self.move_and_click(By.CLASS_NAME, "war_4_start")
-        self.move_and_click(By.CLASS_NAME, "war_w_send_ok")
-        self.move_and_click(By.ID, "slide_close")
+        else:
+            self.move_and_click(By.XPATH, "//div[@action='war']")
+            self.move_and_click(By.CLASS_NAME, "war_4_start")
+            self.move_and_click(By.CLASS_NAME, "war_w_send_ok")
+            self.move_and_click(By.ID, "slide_close")
+            LOG.info("Military training complete")
+            return 60*60
         
 
     def mining(self):
@@ -258,24 +262,28 @@ class PoorBot(RRBot):
         if gold > 0 and energy >= 10:
             self.move_and_click(By.XPATH, "//div[@class='work_factory_button button_blue']", 5)
             self.move_and_click(By.ID, "slide_close")
+            LOG.info("Mining complete, {} energys use to work".format(energy))
         elif gold > 0 and sec == 0:
             self.move_and_click(By.ID, "header_my_fill_bar")
         else:
-            if gold == 0 or energy >= 10 or sec == 0:
-                LOG.info("Lack of gold or other problems")
+            if gold == 0:
+                LOG.info("Lack of gold")
+                return 600
+            elif energy >= 10 or sec == 0:
+                LOG.error("Some error occurred in mining")
+                return 600
+            
             return sec
 
         return self.mining()
 
 
     def idle(self):
-        sec = 0
+        sec = 600
         if not self.check_travel():
-            self.check_war()
-            sec = self.mining()
+            war_sec = self.check_war()
+            mining_sec = self.mining()
 
-        self.check_perk()
-        if sec == 0:
-            self.sleep(600)
-        else:
-            self.sleep(sec)
+        perk_sec = self.check_perk()
+
+        self.sleep(min(war_sec, mining_sec, perk_sec, sec))

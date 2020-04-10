@@ -77,5 +77,5 @@ if __name__ == '__main__':
                 r.start()
                 break
             except Exception as err:
-                LOG.info(err)
+                LOG.error('Bot detect error: {}'.format(err))
                 r.quit()
