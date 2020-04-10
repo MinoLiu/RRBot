@@ -280,6 +280,8 @@ class PoorBot(RRBot):
 
     def idle(self):
         sec = 600
+        war_sec = 600
+        mining_sec = 600
         if not self.check_travel():
             war_sec = self.check_war()
             mining_sec = self.mining()
