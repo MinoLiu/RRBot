@@ -2,3 +2,6 @@ chromeData*
 .vscode
 __pycache__
 *.log
+build
+dist
+*.spec

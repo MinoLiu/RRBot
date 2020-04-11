@@ -1,6 +1,39 @@
 from enum import Enum
 
 
+class Storage(Enum):
+    Aircrafts = 1
+    Tanks = 2
+    Oil = 3
+    Ore = 4
+    Uranium = 11
+    Diamonds = 15
+    Liquidoxygen = 21
+    Helium3 = 24
+    Rivalium = 26
+    Antirad = 13
+    Energydrink = 17
+    Spacerockets = 20
+    LSS = 25
+    Missiles = 14
+    Bombers = 16
+    Battleships = 18
+    Laserdrones = 27
+    Moontanks = 22
+    Spacestations = 23
+
+    @classmethod
+    def xpath(cls, storage_id):
+        if cls.has_value(storage_id):
+            return "//span[@urlbar='{}']".format(storage_id)
+
+        raise Exception("Storage_id {} not exist in StorageEnum".format(storage_id))
+
+    @classmethod
+    def has_value(cls, storage_id):
+        return storage_id in cls._value2member_map_
+
+
 class Perk(Enum):
     STR = 0
     EDU = 1
