@@ -149,28 +149,31 @@ class RRBot:
         self.move_and_click(By.XPATH, upgrade_xpath)
 
         LOG.info("Upgrading {}: {} -> {}".format(perk.name,
-                                                 self.perks[perk.name],
-                                                 self.perks[perk.name] + 1))
+                                                 self.perks[perk.name][0],
+                                                 self.perks[perk.name][0] + 1))
 
     def calculate_perk_time(self):
         soup = BeautifulSoup(self.driver.page_source, "html5lib")
-        self.perks['STR'] = int(
+
+        if countdown:= soup.find("div", {"id": "perk_counter_2"}):
+            return utils.convert_str_time(countdown.text)
+
+        time_texts = soup.find_all("div", {"class": "perk_4"})
+        self.perks['STR'] = (int(
             soup.find("div", {
                 "perk": "1",
                 "class": "perk_source_2"
-            }).text)
-        self.perks['EDU'] = int(
+            }).text), utils.convert_str_time(time_texts[0].text.strip().split("$, ")[-1]))
+        self.perks['EDU'] = (int(
             soup.find("div", {
                 "perk": "2",
                 "class": "perk_source_2"
-            }).text)
-        self.perks['END'] = int(
+            }).text), utils.convert_str_time(time_texts[2].text.strip().split("$, ")[-1]))
+        self.perks['END'] = (int(
             soup.find("div", {
                 "perk": "3",
                 "class": "perk_source_2"
-            }).text)
-        if countdown:= soup.find("div", {"id": "perk_counter_2"}):
-            return utils.convert_str_time(countdown.text)
+            }).text), utils.convert_str_time(time_texts[4].text.strip().split("$, ")[-1]))
 
         return 0
 
@@ -198,6 +201,11 @@ class RRBot:
         self.move_and_click(By.XPATH, Storage.xpath(storage_id.value))
         price, num = self.check_product_price()
         _, money = self.check_money()
+        # Reserve 5 milion for upgrade
+        money -= 5000000
+
+        if money < price:
+            return
 
         amount = amount if num >= amount else num
         if price * amount > money:
