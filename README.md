@@ -62,7 +62,7 @@ $ ./rrbot.exe -l GOOGLE -p GOOGLE_ACCOUNT -u RRCash --proxy socks5://localhost:1
 - [x] Perk upgrading
 - [x] Working
 - [x] Military training
-- [x] Weapon replenishment and energy drinks
+- [x] Purchase weapons and produce energy drinks
 
 ### Requirement
 

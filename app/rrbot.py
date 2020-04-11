@@ -214,12 +214,12 @@ class RRBot:
         soup = BeautifulSoup(self.driver.page_source, "html5lib")
 
         # Produce energy drink
-        if int(soup.find("span", {"urlbar": str(Storage.Energydrink.value)}).text.replace('.', '')) <= 300:
+        if int(soup.find("span", {"urlbar": str(Storage.Energydrink.value)}).text.replace('.', '')) <= 10800:
             self.move_and_click(By.XPATH, Storage.xpath(Storage.Energydrink.value))
             gold, _ = self.check_money()
             # 6 hours
             amount = 10800
-            if gold <= 1080:
+            if gold < 1080:
                 amount = gold * 10
             input_element = self.driver.find_element(By.CLASS_NAME, 'storage_produce_ammount')
             input_element.clear()
@@ -228,12 +228,12 @@ class RRBot:
 
         # Buy Bombers
         if int(soup.find("span", {"urlbar": str(Storage.Bombers.value)}).
-                text.replace('.', '')) <= 500:
+                text.replace('.', '')) < 10000:
             self.buy_product(Storage.Bombers, 10000)
 
         # Buy Moon tanks
         if int(soup.find("span", {"urlbar": str(Storage.Moontanks.value)}).
-                text.replace('.', '')) <= 500:
+                text.replace('.', '')) < 10000:
             self.buy_product(Storage.Moontanks, 10000)
 
     def check_perk(self):
