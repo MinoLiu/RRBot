@@ -62,3 +62,4 @@ if __name__ == '__main__':
             except Exception as err:
                 LOG.error('Bot detect error: {}'.format(err))
                 r.quit()
+                LOG.info('Restarting...')

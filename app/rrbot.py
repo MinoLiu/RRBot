@@ -69,7 +69,7 @@ class RRBot:
             self.upgrade_perk = Perk.EDU
         elif upgrade_perk == "END":
             self.upgrade_perk = Perk.END
-        else:
+        elif upgrade_perk:
             self.upgrade_perk = None
 
         self.first_login = first_login
@@ -233,6 +233,7 @@ class RRBot:
             input_element.clear()
             input_element.send_keys(amount)
             self.move_and_click(By.CLASS_NAME, 'storage_produce_button')
+            LOG.info('Produced: energy drink {} pcs.'.format(amount))
 
         # Buy Bombers
         if int(soup.find("span", {"urlbar": str(Storage.Bombers.value)}).
@@ -293,18 +294,6 @@ class PoorBot(RRBot):
             sec = utils.convert_str_time(countdown.text)
 
         return energy, sec
-
-    def check_perk(self):
-        self.move_and_click(By.XPATH, "//div[@action='main/content']", 5)
-        if (t:= self.calculate_perk_time()) == 0:
-            if self.upgrade_perk is not None:
-                self.upgrade(self.upgrade_perk)
-            else:
-                perk = Perk.perk_strategy(**self.perks)
-                self.upgrade(perk)
-            return 600
-        else:
-            return t
 
     def check_travel(self):
         self.move_and_click(By.XPATH, "//div[@action='main/content']", 5)
