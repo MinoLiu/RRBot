@@ -13,6 +13,7 @@ class RRBot(utils.aobject):
     """
     A RRBot class.
     """
+
     async def __init__(
         self,
         login_method="GOOGLE",
@@ -156,14 +157,14 @@ class RRBot(utils.aobject):
         }
         try:
             await self.browser.click(selectors[self.login_method]),
-            await self.browser.wait_for_response('https://rivalregions.com/', timeout=240000),
+            await self.browser.wait_for_response('https://rivalregions.com/', timeout=240000)
+            await self.browser.wait_for('#chat input[name=name]', timeout=10000)
+            name = await self.browser.query_selector_eval('#chat input[name=name]', 'node => node.value')
+            LOG.info("Login success {}".format(name))
+            await self.save_cookies()
         except Exception as err:
             LOG.info(err)
 
-        await self.browser.wait_for('#chat input[name=name]', timeout=10000)
-        name = await self.browser.query_selector_eval('#chat input[name=name]', 'node => node.value')
-        LOG.info("Login success {}".format(name))
-        await self.save_cookies()
         await self.check_login()
 
     async def upgrade(self, perk):
