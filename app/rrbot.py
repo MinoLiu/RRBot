@@ -19,6 +19,7 @@ class RRBot(utils.aobject):
         use_to_upgrade="RRCash",
         profile="default",
         upgrade_perk=None,
+        upgrade_strategy="2:1:1",
         proxy=None,
         headless=None,
         poor=None
@@ -35,6 +36,15 @@ class RRBot(utils.aobject):
 
         self.login_method = login_method
         self.use_to_upgrade = use_to_upgrade
+        try:
+            self.upgrade_strategy = [int(x) for x in upgrade_strategy.split(':')]
+            assert len(self.upgrade_strategy) == 3
+
+        except Exception:
+            LOG.error("--upgrade_strategy invalid")
+
+        self.perks = {'strategy': self.upgrade_strategy}
+
         if upgrade_perk == "STR":
             self.upgrade_perk = Perks.STR
         elif upgrade_perk == "EDU":
@@ -45,8 +55,6 @@ class RRBot(utils.aobject):
             self.upgrade_perk = None
 
         await self.load_cookies()
-
-        self.perks = {}
 
         await self.browser.goto(self.uri, waitUntil='networkidle0')
         await self.check_login()

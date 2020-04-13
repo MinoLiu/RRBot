@@ -161,12 +161,13 @@ class Perks(Enum):
     END = 2
 
     @staticmethod
-    def perk_strategy(STR, EDU, END):
+    def perk_strategy(STR, EDU, END, strategy=[2, 1, 1]):
         """
         Used to decide which one to upgrade
-        : param STR: tuple(int: point, int: sec)
-        : param EDU: tuple(int: point, int: sec)
-        : param END: tuple(int: point, int: sec)
+        : param STR tuple(int: point, int: sec)
+        : param EDU tuple(int: point, int: sec)
+        : param END tuple(int: point, int: sec)
+        : param strategy list(int)
         """
         perk = None
         if END[0] < 50:
@@ -182,9 +183,9 @@ class Perks(Enum):
         elif EDU[0] < 100:
             perk = Perks.EDU
         else:
-            if float(STR[1]) / END[1] > 2.0:
+            if float(STR[1]) / END[1] > (float(strategy[0]) / strategy[2]):
                 perk = Perks.END
-            elif float(STR[1]) / EDU[1] > 1.0:
+            elif float(STR[1]) / EDU[1] > (float(strategy[0]) / strategy[1]):
                 perk = Perks.EDU
             else:
                 perk = Perks.STR

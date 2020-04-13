@@ -14,8 +14,8 @@ A bot for RR
 
 ```
 $ ./rrbot.exe
-usage: rrbot.exe [-h] [-l LOGIN_METHOD] [-u USE_TO_UPGRADE] [-p PROFILE] [--upgrade_perk UPGRADE_PERK] [--poor]
-               [--headless] [--proxy PROXY]
+usage: rrbot.exe [-h] [-l LOGIN_METHOD] [-u USE_TO_UPGRADE] [-p PROFILE] [--upgrade_perk UPGRADE_PERK] [--poor] [--headless] [--proxy PROXY]
+               [--upgrade_strategy UPGRADE_STRATEGY]
 
 optional arguments:
   -h, --help            show this help message and exit
@@ -26,10 +26,12 @@ optional arguments:
   -p PROFILE, --profile PROFILE
                         帳戶profile: 預設為'default', 修改可更換帳戶
   --upgrade_perk UPGRADE_PERK
-                        生級指定選項 'STR'、'EDU'、'END' 不指定將會使用Discord社群推薦的配點
+                        只升級指定的選項 'STR'、'EDU'、'END' 不指定將會使用upgrade_strategy
   --poor                你是窮人, 你買不起高級會員, 你必須手動挖礦、軍演, 可憐哪 我來幫你
   --headless            確定使用者有登入成功後可開啟 將瀏覽器GUI關閉節省資源
   --proxy PROXY         正確格式如下: socks5://localhost:1080, https://localhost:1080
+  --upgrade_strategy UPGRADE_STRATEGY
+                        三圍100後將按照時間比例來升級 default '2:1:1'
 ```
 
 #### 第一次使用請不要開啟 headless mode
@@ -42,7 +44,7 @@ $ ./rrbot.exe -l FB -p FB_ACCOUNT -u RRCash
 #### 你買不起高帳
 
 ```
-$ ./rrbot.exe -l GOOGLE -p GOOGLE_ACCOUNT -u RRCash --poor
+$ ./rrbot.exe -l GOOGLE -p GOOGLE_ACCOUNT -u RRCash --poor --upgrade_strategy '2:2:1'
 ```
 
 #### Use proxy
@@ -91,8 +93,8 @@ Let `pipenv run python main.py` replace `rrbot.exe`
 
 ```
 $ pipenv run python main.py
-usage: main.py [-h] [-l LOGIN_METHOD] [-u USE_TO_UPGRADE] [-p PROFILE] [--upgrade_perk UPGRADE_PERK] [--poor]
-               [--headless] [--proxy PROXY]
+usage: main.py [-h] [-l LOGIN_METHOD] [-u USE_TO_UPGRADE] [-p PROFILE] [--upgrade_perk UPGRADE_PERK] [--poor] [--headless] [--proxy PROXY]
+               [--upgrade_strategy UPGRADE_STRATEGY]
 
 optional arguments:
   -h, --help            show this help message and exit
@@ -103,8 +105,10 @@ optional arguments:
   -p PROFILE, --profile PROFILE
                         帳戶profile: 預設為'default', 修改可更換帳戶
   --upgrade_perk UPGRADE_PERK
-                        生級指定選項 'STR'、'EDU'、'END' 不指定將會使用Discord社群推薦的配點
+                        只升級指定的選項 'STR'、'EDU'、'END' 不指定將會使用upgrade_strategy
   --poor                你是窮人, 你買不起高級會員, 你必須手動挖礦、軍演, 可憐哪 我來幫你
   --headless            確定使用者有登入成功後可開啟 將瀏覽器GUI關閉節省資源
   --proxy PROXY         正確格式如下: socks5://localhost:1080, https://localhost:1080
+  --upgrade_strategy UPGRADE_STRATEGY
+                        三圍100後將按照時間比例來升級 default '2:1:1'
 ```
