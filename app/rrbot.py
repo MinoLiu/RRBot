@@ -1,206 +1,223 @@
-import os
-import time
-import sys
+import pickle
 from random import randint
 from bs4 import BeautifulSoup
 
 from app import LOG
 from app import utils
-from app.utils import Perk, Storage
-from selenium import webdriver
-from selenium.common.exceptions import JavascriptException
-from selenium.webdriver.common.action_chains import ActionChains
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
-from selenium.webdriver.common.by import By
+from app.utils import Perks, Storage, Overview, Status
+from app.browser import Browser
+import asyncio
 
 
-class RRBot:
+class RRBot(utils.aobject):
     """
     A RRBot class.
-
-    : param login_method: str            GOOGLE,FB,VK
-    : param use_to_upgrade: str          RRCash, GOLD
-    : param upgrade_perk: str or None    None: Follow my recommend or "STR", "EDU", "END"
-    : param profile: str                 Anything, use to save profile
-    : param first_login: bool            True to wait 60 seconds for first login, else False
     """
-    def __init__(self,
-                 login_method="GOOGLE",
-                 use_to_upgrade="RRCash",
-                 profile="default",
-                 upgrade_perk=None,
-                 first_login=False,
-                 proxy=None,
-                 headless=None,
-                 poor=None
-                 ):
+    async def __init__(
+        self,
+        login_method="GOOGLE",
+        use_to_upgrade="RRCash",
+        profile="default",
+        upgrade_perk=None,
+        proxy=None,
+        headless=None,
+        poor=None
+    ):
+        self.profile = profile
 
-        self.uri = {
-            'host': "https://rivalregions.com",
-            'overview': "https://rivalregions.com/#overview"
-        }
-
-        options = webdriver.ChromeOptions()
-
-        if headless:
-            options.add_argument('--headless')
-            options.add_argument('--disable-gpu')
-
-        options.add_argument("user-data-dir={}".format(
-            os.path.join(os.path.abspath(os.getcwd()),
-                         'chromeData_' + profile)))
+        self.uri = "https://rivalregions.com"
+        self.headless = headless
         if proxy:
-            options.add_argument('--proxy-server={}'.format(proxy))
+            proxy = "--proxy-server={}".format(proxy)
 
-        chromedriver_path = "chromedriver.exe"
-        if getattr(sys, 'frozen', False):
-            # executed as a bundled exe, the driver is in the extracted folder
-            chromedriver_path = os.path.join(sys._MEIPASS, "chromedriver.exe")
-
-        self.driver = webdriver.Chrome(chromedriver_path, chrome_options=options)
-        self.driver.implicitly_wait(10)
+        self.browser = await Browser(headless, proxy)
+        self.browser.set_default_navigation_timeout(30000)
 
         self.login_method = login_method
         self.use_to_upgrade = use_to_upgrade
         if upgrade_perk == "STR":
-            self.upgrade_perk = Perk.STR
+            self.upgrade_perk = Perks.STR
         elif upgrade_perk == "EDU":
-            self.upgrade_perk = Perk.EDU
+            self.upgrade_perk = Perks.EDU
         elif upgrade_perk == "END":
-            self.upgrade_perk = Perk.END
-        elif upgrade_perk:
+            self.upgrade_perk = Perks.END
+        else:
             self.upgrade_perk = None
 
-        self.first_login = first_login
-        self.perks = {}
-        self.driver.get(self.uri['host'])
-        self.check_login()
+        await self.load_cookies()
 
-    def start(self):
+        self.perks = {}
+
+        await self.browser.goto(self.uri, waitUntil='networkidle0')
+        await self.check_login()
+
+    async def save_cookies(self):
+        cookies = await self.browser.cookies(
+            'https://rivalregions.com/', 'https://www.facebook.com/', 'https://accounts.google.com/',
+            'https://oauth.vk.com/'
+        )
+
+        pickle.dump(cookies, open("{}.pkl".format(self.profile), "wb"))
+        LOG.info("Cookies saved!")
+
+    async def load_cookies(self):
+        try:
+            cookies = pickle.load(open("{}.pkl".format(self.profile), "rb"))
+            for cookie in cookies:
+                await self.browser.set_cookie(cookie)
+            LOG.info("Cookies loaded!")
+        except Exception:
+            LOG.info('First Login')
+            if self.headless:
+                LOG.error('Please do not use headless mode!')
+
+    async def start(self):
         LOG.info('Bot start')
         while (True):
-            self.idle()
-            self.sleep(5)
+            await self.idle()
+            await self.sleep(5)
 
-    def move_and_click(self, by, what, delay=3, wait=10):
-        """
+    async def idle(self):
+        await self.browser.goto(Overview.url, waitUntil='networkidle0')
+        await self.refresh()
+        await self.check_login()
 
-        : param by: (By)     By.ID、By.XPATH ...
-        : param what: (str)  id、xpath ...
-        : param delay: (int)
-        ex:
-            self.move_and_click(By.ID, "OOF")
-        """
-        WebDriverWait(self.driver, wait).until(EC.presence_of_element_located((by, what)))
-        button = self.driver.find_element(by, what)
-        action = ActionChains(self.driver)
-        action.move_to_element(button).click(button).perform()
-        self.sleep(delay)
+        await self.do_perks_upgrade()
+        await self.do_storage_supply()
 
-    def refresh(self):
-        self.driver.refresh()
+        await self.check_overview()
 
-    def quit(self):
-        self.driver.quit()
+        time = await self.calculate_perks_time()
+        if time:
+            await self.sleep(21600 if time >= 21600 else time)
 
-    def check_login(self):
-        self.sleep(10)
-        try:
-            self.driver.execute_script('return c_html')
-        except JavascriptException as err:
-            self.login()
+    async def click(self, selector: str, wait_for=None, wait_for_navigation=False, wait_for_sec=30):
+        await self.browser.wait_for(selector, timeout=wait_for_sec * 1000)
 
-    def sleep(self, sec=randint(10, 30)):
+        # IDK why it doesn't work
+        #       await self.browser.click(selector)
+
+        if wait_for_navigation:
+            asyncio.wait([
+                self.browser.query_selector_eval(selector, 'el => el.click()'),
+                self.browser.wait_for_navigation(waitUntil='networkidle0')
+            ])
+        else:
+            # Use js instead
+            await self.browser.query_selector_eval(selector, 'el => el.click()')
+
+        if wait_for:
+            await self.browser.wait_for(wait_for, timeout=wait_for_sec * 1000)
+
+        await self.sleep(1)
+
+    async def type(self, selector: str, text: str, delay: int = 0):
+        await self.browser.clear(selector)
+        await self.browser.type(selector, text, delay=delay)
+
+    async def refresh(self):
+        await self.browser.reload(waitUntil='networkidle0')
+
+    async def close(self):
+        await self.browser.close()
+
+    async def quit(self):
+        await self.browser.quit()
+
+    async def sleep(self, sec=randint(10, 30)):
         if (sec >= 120):
             LOG.info("Wait for {:.1f} minutes".format(sec / 60.0))
-        time.sleep(sec)
+        await self.browser.wait_for(sec * 1000)
 
-    def login(self):
-        self.driver.get(self.uri['host'])
-        button = None
-        xpath = None
-        if self.login_method == "FB":
-            xpath = '//*[@id="sa_add2"]/div[2]/a[1]/div'
-        elif self.login_method == "VK":
-            xpath = '//*[@id="sa_add2"]/div[2]/a[3]/div'
+    async def get_soup(self):
+        return BeautifulSoup(await self.browser.content(), "html5lib")
+
+    async def check_login(self):
+        try:
+            await self.browser.wait_for('() => {return c_html;}', timeout=10000)
+        except Exception as err:
+            LOG.debug(err)
+            await self.login()
+
+    async def login(self):
+        await self.browser.goto(self.uri, waitUntil='networkidle0')
+        selectors = {
+            'FB': '.sa_link[href*="facebook.com"]',
+            'GOOGLE': '.sa_link[href*="google.com"]',
+            'VK': '.sa_link[href*="vk.com"]'
+        }
+        try:
+            await self.browser.click(selectors[self.login_method]),
+            await self.browser.wait_for_response('https://rivalregions.com/', timeout=240000),
+        except Exception as err:
+            LOG.info(err)
+
+        await self.browser.wait_for('#chat input[name=name]', timeout=10000)
+        name = await self.browser.query_selector_eval('#chat input[name=name]', 'node => node.value')
+        LOG.info("Login success {}".format(name))
+        await self.save_cookies()
+        await self.check_login()
+
+    async def upgrade(self, perk):
+        selector = None
+        upgrade_selector = "#perk_target_4 > div[url='{}'] > div > div".format(
+            2 if self.use_to_upgrade == "GOLD" else 1
+        )
+        if perk == Perks.STR:
+            selector = ".perk_item[perk='1']"
+        elif perk == Perks.EDU:
+            selector = ".perk_item[perk='2']"
+        elif perk == Perks.END:
+            selector = ".perk_item[perk='3']"
         else:
-            xpath = '//*[@id="sa_add2"]/div[2]/a[2]/div'
-        self.move_and_click(By.XPATH, xpath)
-        LOG.info("click login button")
-        if self.first_login:
-            self.sleep(60)
-            self.first_login = False
+            raise Exception("Perk not found")
 
-        self.check_login()
+        await self.click(selector, wait_for=upgrade_selector)
+        await self.click(upgrade_selector)
+        await self.sleep(3)
 
-    def upgrade(self, perk):
-        xpath = None
-        upgrade_xpath = '//*[@id="perk_target_4"]/div[1]/div[1]/div' if \
-            self.use_to_upgrade != "GOLD" else '//*[@id="perk_target_4"]/div[2]/div[1]/div'
-        if perk == Perk.STR:
-            xpath = '//*[@id="index_perks_list"]/div[4]'
-        elif perk == Perk.EDU:
-            xpath = '//*[@id="index_perks_list"]/div[5]'
-        elif perk == Perk.END:
-            xpath = '//*[@id="index_perks_list"]/div[6]'
+        LOG.info("Upgrading {}: {} -> {}".format(perk.name, self.perks[perk.name][0], self.perks[perk.name][0] + 1))
 
-        self.move_and_click(By.XPATH, xpath)
-        self.move_and_click(By.XPATH, upgrade_xpath)
+    async def calculate_perks_time(self) -> int:
+        soup = await self.get_soup()
 
-        LOG.info("Upgrading {}: {} -> {}".format(perk.name,
-                                                 self.perks[perk.name][0],
-                                                 self.perks[perk.name][0] + 1))
-
-    def calculate_perk_time(self):
-        soup = BeautifulSoup(self.driver.page_source, "html5lib")
-
-        if countdown:= soup.find("div", {"id": "perk_counter_2"}):
+        countdown = soup.find("div", {"id": "perk_counter_2"})
+        if countdown:
             return utils.convert_str_time(countdown.text)
 
         time_texts = soup.find_all("div", {"class": "perk_4"})
-        self.perks['STR'] = (int(
-            soup.find("div", {
+        self.perks['STR'] = (
+            int(soup.find("div", {
                 "perk": "1",
                 "class": "perk_source_2"
-            }).text), utils.convert_str_time(time_texts[0].text.strip().split("$, ")[-1]))
-        self.perks['EDU'] = (int(
-            soup.find("div", {
+            }).text), utils.convert_str_time(time_texts[0].text.strip().split("$, ")[-1])
+        )
+        self.perks['EDU'] = (
+            int(soup.find("div", {
                 "perk": "2",
                 "class": "perk_source_2"
-            }).text), utils.convert_str_time(time_texts[2].text.strip().split("$, ")[-1]))
-        self.perks['END'] = (int(
-            soup.find("div", {
+            }).text), utils.convert_str_time(time_texts[2].text.strip().split("$, ")[-1])
+        )
+        self.perks['END'] = (
+            int(soup.find("div", {
                 "perk": "3",
                 "class": "perk_source_2"
-            }).text), utils.convert_str_time(time_texts[4].text.strip().split("$, ")[-1]))
+            }).text), utils.convert_str_time(time_texts[4].text.strip().split("$, ")[-1])
+        )
 
         return 0
 
-    def check_money(self):
-        soup = BeautifulSoup(self.driver.page_source, "html5lib")
-        gold = int(soup.find("span", {"id": "g"}).text.replace('.', ''))
-        money = int(soup.find("span", {"id": "m"}).text.replace('.', ''))
-        return gold, money
-
-    def check_product_price(self):
-        soup = BeautifulSoup(self.driver.page_source, "html5lib")
-        max_num = int(soup.find(
-            "span", {"class": "dot hov2 pointer small storage_market_number"}).text.replace('.', ''))
-        price = int(
-            soup.find(
-                "div", {"class": "float_left storage_price small"}
-            ).find("span", {"class": "dot"}).text.replace('.', '').replace(' $', '')
-        )
-        return price, max_num
-
-    def buy_product(self, storage_id, amount):
+    async def buy_product(self, storage_id, amount):
         """
-        : Storage_id: (Storage)   Storage.Bombers、.....
+        Must be #storage page
+
+        : Storage_id (Storage):   Storage.Bombers、.....
+        : amount (int)
         """
-        self.move_and_click(By.XPATH, Storage.xpath(storage_id.value))
-        price, num = self.check_product_price()
-        _, money = self.check_money()
+        await self.click(Storage.selector(storage_id.value))
+        await self.sleep(3)
+        price, num = Storage.check_product_price(await self.get_soup())
+        _, money = Status.check_money(await self.get_soup())
         # Reserve 5 milion for upgrade
         money -= 5000000
 
@@ -211,148 +228,61 @@ class RRBot:
         if price * amount > money:
             amount = money // price
 
-        buy_input = self.driver.find_element(By.CLASS_NAME, 'storage_buy_input')
-        buy_input.clear()
-        buy_input.send_keys(amount)
-        self.move_and_click(By.CLASS_NAME, 'storage_buy_button')
+        await self.type('.storage_buy_input', str(amount))
+        await self.click('.storage_buy_button')
+        await self.sleep(3)
         LOG.info("Market purchase: {}, {} pcs, total {}.".format(storage_id.name, amount, price * amount))
 
-    def check_storage(self):
-        self.move_and_click(By.XPATH, "//div[@action='storage']")
-        soup = BeautifulSoup(self.driver.page_source, "html5lib")
+    async def do_storage_supply(self):
+        await self.click(Storage.selector(), wait_for=".storage_number")
+        soup = BeautifulSoup((await self.browser.content()), "html5lib")
 
         # Produce energy drink
         if int(soup.find("span", {"urlbar": str(Storage.Energydrink.value)}).text.replace('.', '')) <= 10800:
-            self.move_and_click(By.XPATH, Storage.xpath(Storage.Energydrink.value))
-            gold, _ = self.check_money()
+            await self.click(Storage.selector(Storage.Energydrink.value))
+            await self.sleep(3)
+            gold, _ = Status.check_money(await self.get_soup())
+
             # 6 hours
             amount = 10800
             if gold < 1080:
                 amount = gold * 10
-            input_element = self.driver.find_element(By.CLASS_NAME, 'storage_produce_ammount')
-            input_element.clear()
-            input_element.send_keys(amount)
-            self.move_and_click(By.CLASS_NAME, 'storage_produce_button')
+
+            await self.type('.storage_produce_ammount', str(amount))
+            await self.click('.storage_produce_button')
+            await self.sleep(3)
             LOG.info('Produced: energy drink {} pcs.'.format(amount))
 
         # Buy Bombers
-        if int(soup.find("span", {"urlbar": str(Storage.Bombers.value)}).
-                text.replace('.', '')) < 10000:
-            self.buy_product(Storage.Bombers, 10000)
+        if int(soup.find("span", {"urlbar": str(Storage.Bombers.value)}).text.replace('.', '')) < 10000:
+            await self.buy_product(Storage.Bombers, 10000)
 
         # Buy Moon tanks
-        if int(soup.find("span", {"urlbar": str(Storage.Moontanks.value)}).
-                text.replace('.', '')) < 10000:
-            self.buy_product(Storage.Moontanks, 10000)
+        if int(soup.find("span", {"urlbar": str(Storage.Moontanks.value)}).text.replace('.', '')) < 10000:
+            await self.buy_product(Storage.Moontanks, 10000)
 
-    def check_perk(self):
-        self.move_and_click(By.XPATH, "//div[@action='main/content']", 5)
-        if (t:= self.calculate_perk_time()) == 0:
+    async def do_perks_upgrade(self) -> int:
+        await self.click(Overview.selector(), wait_for='#chat input[name=name]')
+        t = await self.calculate_perks_time()
+        if t == 0:
             if self.upgrade_perk is not None:
-                self.upgrade(self.upgrade_perk)
+                await self.upgrade(self.upgrade_perk)
             else:
-                perk = Perk.perk_strategy(**self.perks)
-                self.upgrade(perk)
+                perk = Perks.perk_strategy(**self.perks)
+                await self.upgrade(perk)
             return 600
         else:
             return t
 
-    def idle(self):
-        self.refresh()
-        self.check_login()
-
-        self.driver.get(self.uri['overview'])
-        self.refresh()
-        self.sleep(5)
-
-        self.check_storage()
-        self.check_perk()
-
-        if time:= self.calculate_perk_time():
-            self.sleep(21600 if time >= 21600 else time)
-
-
-class PoorBot(RRBot):
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-
-    def check_region_gold(self):
+    async def check_overview(self) -> (int, bool, (int, int)):
         """
-        Must be work page
+        Return
+            (
+                wars_cooldown_time,
+                is_traveling,
+                (energy, energy_cooldown_time)
+            )
         """
-        soup = BeautifulSoup(self.driver.page_source, "html5lib")
-        gold = float(soup.find("span", {"class":"imp yellow tip"}).text)
-
-        return gold
-
-    def check_energy(self):
-        soup = BeautifulSoup(self.driver.page_source, "html5lib")
-        energy = int(soup.find("span", {"id": "s"}).text)
-        sec = 0
-
-        if countdown:= soup.find("span", {"id": "header_my_fill_bar_countdown"}):
-            sec = utils.convert_str_time(countdown.text)
-
-        return energy, sec
-
-    def check_travel(self):
-        self.move_and_click(By.XPATH, "//div[@action='main/content']", 5)
-        soup = BeautifulSoup(self.driver.page_source, "html5lib")
-        if soup.find("div", {"class":"button_red pointer map_d_b_ind index_registartion_home"}):
-            return True
-        return False
-
-    def check_war(self):
-        self.move_and_click(By.XPATH, "//div[@action='main/content']", 5)
-        soup = BeautifulSoup(self.driver.page_source, "html5lib")
-        if countdown:= soup.find("span", {"class": "small tip dot pointer war_index_war_countdown hasCountdown"}):
-            if (t:= utils.convert_str_time(countdown.text)) > 0:
-                return t
-        else:
-            self.move_and_click(By.XPATH, "//div[@action='war']")
-            self.move_and_click(By.CLASS_NAME, "war_4_start")
-            self.move_and_click(By.CLASS_NAME, "war_w_send_ok")
-            self.move_and_click(By.ID, "slide_close")
-            LOG.info("Military training complete")
-            return 3600
-
-    def mining(self):
-        self.move_and_click(By.XPATH, "//div[@action='work']")
-
-        energy, sec = self.check_energy()
-        gold = self.check_region_gold()
-
-        soup = BeautifulSoup(self.driver.page_source, "html5lib")
-        if soup.find("div", {"class": "work_factory_button button_blue"}) is None:
-            LOG.info("Working is not possible")
-            return 600
-
-        if gold > 0 and energy >= 10:
-            self.move_and_click(By.XPATH, "//div[@class='work_factory_button button_blue']", 5)
-            self.move_and_click(By.ID, "slide_close")
-            LOG.info("Mining complete, {} energys use to work".format(energy))
-        elif gold > 0 and sec == 0:
-            self.move_and_click(By.ID, "header_my_fill_bar")
-        else:
-            if gold == 0:
-                LOG.info("Region lack of gold")
-                return 600
-            elif energy >= 10 or sec == 0:
-                LOG.error("Some error occurred in mining")
-                return 600
-            return sec
-
-        return self.mining()
-
-    def idle(self):
-        sec = 600
-        war_sec = 600
-        mining_sec = 600
-        if not self.check_travel():
-            self.check_storage()
-            war_sec = self.check_war()
-            mining_sec = self.mining()
-
-        perk_sec = self.check_perk()
-
-        self.sleep(min(war_sec, mining_sec, perk_sec, sec))
+        await self.click(Overview.selector(), wait_for='#chat input[name=name]')
+        soup = await self.get_soup()
+        return (Overview.check_war(soup), Overview.check_travel(soup), Status.check_energy(soup))

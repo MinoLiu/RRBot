@@ -10,15 +10,12 @@ A bot for RR
 
 - https://github.com/Sean2525/RRBot/releases
 
-### Requirement
-
-- chrome 81
-
 ### Usage for powershell
 
 ```
 $ ./rrbot.exe
-usage: rrbot.exe [-h] [-l LOGIN_METHOD] [-u USE_TO_UPGRADE] [-p PROFILE] [--upgrade_perk UPGRADE_PERK] [-f] [--poor] [--headless] [--proxy PROXY]
+usage: rrbot.exe [-h] [-l LOGIN_METHOD] [-u USE_TO_UPGRADE] [-p PROFILE] [--upgrade_perk UPGRADE_PERK] [--poor]
+               [--headless] [--proxy PROXY]
 
 optional arguments:
   -h, --help            show this help message and exit
@@ -30,29 +27,34 @@ optional arguments:
                         帳戶profile: 預設為'default', 修改可更換帳戶
   --upgrade_perk UPGRADE_PERK
                         生級指定選項 'STR'、'EDU'、'END' 不指定將會使用Discord社群推薦的配點
-  -f, --first_login     預設為False, True將會等待60秒讓使用者登入
   --poor                你是窮人, 你買不起高級會員, 你必須手動挖礦、軍演, 可憐哪 我來幫你
-  --headless            預設為False, True將會停用瀏覽器GUI (由於headless chrome目前有bug無法共通user-data所以目前無法使用)
-  --proxy PROXY         請先去確認proxy活著 正確格式如下: socks5://localhost:1080, https://localhost:1080
+  --headless            確定使用者有登入成功後可開啟 將瀏覽器GUI關閉節省資源
+  --proxy PROXY         正確格式如下: socks5://localhost:1080, https://localhost:1080
 ```
 
-#### 第一次使用
+#### 第一次使用請不要開啟 headless mode
 
 ```
-$ ./rrbot.exe -l GOOGLE -p GOOGLE_ACCOUNT -u RRCash -f
-$ ./rrbot.exe -l FB -p FB_ACCOUNT -u RRCash -f
+$ ./rrbot.exe -l GOOGLE -p GOOGLE_ACCOUNT -u RRCash
+$ ./rrbot.exe -l FB -p FB_ACCOUNT -u RRCash
 ```
 
 #### 你買不起高帳
 
 ```
-$ ./rrbot.exe -l GOOGLE -p GOOGLE_ACCOUNT -u RRCash -f --poor
+$ ./rrbot.exe -l GOOGLE -p GOOGLE_ACCOUNT -u RRCash --poor
 ```
 
 #### Use proxy
 
 ```
 $ ./rrbot.exe -l GOOGLE -p GOOGLE_ACCOUNT -u RRCash --proxy socks5://localhost:1080
+```
+
+#### headless mode
+
+```
+$ ./rrbot.exe -l GOOGLE -p GOOGLE_ACCOUNT -u RRCash --headless
 ```
 
 ## For developer
@@ -66,8 +68,7 @@ $ ./rrbot.exe -l GOOGLE -p GOOGLE_ACCOUNT -u RRCash --proxy socks5://localhost:1
 
 ### Requirement
 
-- python 3.8+
-- chrome 81
+- python 3+
 
 ### Install
 
@@ -81,7 +82,7 @@ $ pipenv install --dev
 ### Build
 
 ```
-pipenv run pyinstaller -F -n rrbot.exe --add-binary "chromedriver.exe;." main.py
+pipenv run pyinstaller -F -n rrbot.exe main.py
 ```
 
 ### Usage
@@ -90,7 +91,7 @@ Let `pipenv run python main.py` replace `rrbot.exe`
 
 ```
 $ pipenv run python main.py
-usage: main.py [-h] [-l LOGIN_METHOD] [-u USE_TO_UPGRADE] [-p PROFILE] [--upgrade_perk UPGRADE_PERK] [-f] [--poor]
+usage: main.py [-h] [-l LOGIN_METHOD] [-u USE_TO_UPGRADE] [-p PROFILE] [--upgrade_perk UPGRADE_PERK] [--poor]
                [--headless] [--proxy PROXY]
 
 optional arguments:
@@ -103,9 +104,7 @@ optional arguments:
                         帳戶profile: 預設為'default', 修改可更換帳戶
   --upgrade_perk UPGRADE_PERK
                         生級指定選項 'STR'、'EDU'、'END' 不指定將會使用Discord社群推薦的配點
-  -f, --first_login     預設為False, True將會等待60秒讓使用者登入
   --poor                你是窮人, 你買不起高級會員, 你必須手動挖礦、軍演, 可憐哪 我來幫你
-  --headless            預設為False, True將會停用瀏覽器GUI (由於headless chrome目前有bug無法共通user-data所以目前無法使
-用)
-  --proxy PROXY         請先去確認proxy活著 正確格式如下: socks5://localhost:1080, https://localhost:1080
+  --headless            確定使用者有登入成功後可開啟 將瀏覽器GUI關閉節省資源
+  --proxy PROXY         正確格式如下: socks5://localhost:1080, https://localhost:1080
 ```

@@ -7,11 +7,13 @@ verify_ssl = true
 yapf = "*"
 pyinstaller = "*"
 flake8 = "*"
+setuptools = "<45.0.0"
 
 [packages]
 beautifulsoup4 = "*"
-selenium = "*"
 html5lib = "*"
+pyppeteer = "*"
+websockets = "==6.0"
 
 [requires]
 python_version = "3.8"
