@@ -3,10 +3,12 @@ from bs4 import BeautifulSoup
 
 
 class aobject(object):
-    """Inheriting this class allows you to define an async __init__.
+    """
+    Inheriting this class allows you to define an async __init__.
 
     So you can create objects by doing something like `await MyClass(params)`
     """
+
     async def __new__(cls, *a, **kw):
         instance = super().__new__(cls)
         await instance.__init__(*a, **kw)
@@ -17,6 +19,7 @@ class aobject(object):
 
 
 class Status:
+
     @staticmethod
     def energy_bar_selector() -> str:
         return "#header_my_fill_bar"
@@ -60,6 +63,7 @@ class Overview:
 
 
 class Work:
+
     @staticmethod
     def selector() -> str:
         return "div[action='work']"

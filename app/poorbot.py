@@ -5,6 +5,7 @@ from app.utils import War, Status, Work
 
 
 class PoorBot(RRBot):
+
     async def __init__(self, **kwargs):
         await super().__init__(**kwargs)
 
@@ -29,11 +30,11 @@ class PoorBot(RRBot):
             return 600
 
         if gold > 0 and energy >= 10:
-            self.click(Work.work_selector(), utils.close_selector())
-            self.click(utils.close_selector())
+            await self.click(Work.work_selector(), utils.close_selector())
+            await self.click(utils.close_selector())
             LOG.info("Mining complete, {} energys use to work".format(energy))
         elif gold > 0 and energy_cooldown_time == 0:
-            self.click(Status.energy_bar_selector())
+            await self.click(Status.energy_bar_selector())
         else:
             if gold == 0:
                 LOG.info("Region lack of gold")

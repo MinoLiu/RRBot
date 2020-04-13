@@ -40,7 +40,6 @@ class RRBot(utils.aobject):
         try:
             self.upgrade_strategy = [int(x) for x in upgrade_strategy.split(':')]
             assert len(self.upgrade_strategy) == 3
-
         except Exception:
             LOG.error("--upgrade_strategy invalid")
 
@@ -94,7 +93,10 @@ class RRBot(utils.aobject):
         await self.do_perks_upgrade()
         await self.do_storage_supply()
 
-        await self.check_overview()
+        _, _, (energy, energy_cooldown_time) = await self.check_overview()
+
+        if (energy >= 20) and energy_cooldown_time == 0:
+            LOG.warn("There is no gold in your area or automatic working expires")
 
         time = await self.calculate_perks_time()
         if time:
