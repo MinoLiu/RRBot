@@ -10,12 +10,16 @@ class PoorBot(RRBot):
         await super().__init__(**kwargs)
 
     async def do_military_training(self) -> int:
-        await self.click(War.selector(), War.military_training_selector())
-        await self.click(War.military_training_selector(), War.send_ok_selector())
-        await self.click(War.send_ok_selector(), utils.close_selector())
-        await self.click(utils.close_selector())
-        LOG.info("Military training complete")
-        await self.sleep(2)
+        try:
+            await self.click(War.selector(), War.military_training_selector())
+            await self.click(War.military_training_selector(), War.send_ok_selector())
+            await self.click(War.send_ok_selector(), utils.close_selector())
+            await self.click(utils.close_selector())
+            LOG.info("Military training completed")
+            await self.sleep(2)
+        except Exception as err:
+            LOG.error(err)
+            LOG.error("Military training failed")
         return 3598
 
     async def do_work(self) -> int:
@@ -30,9 +34,14 @@ class PoorBot(RRBot):
             return 600
 
         if gold > 0 and energy >= 10:
-            await self.click(Work.work_selector(), utils.close_selector())
-            await self.click(utils.close_selector())
-            LOG.info("Mining complete, {} energys use to work".format(energy))
+            try:
+                await self.click(Work.work_selector(), utils.close_selector())
+                await self.click(utils.close_selector())
+                LOG.info("Work is completed {} energys use to work".format(energy))
+            except Exception as err:
+                LOG.error(err)
+                LOG.error("Can not work, maybe the factory owner doesn't have enough money?")
+                return 600
         elif gold > 0 and energy_cooldown_time == 0:
             await self.click(Status.energy_bar_selector())
         else:
@@ -40,7 +49,7 @@ class PoorBot(RRBot):
                 LOG.info("Region lack of gold")
                 return 600
             elif energy >= 10 or energy_cooldown_time == 0:
-                LOG.error("Some error occurred in mining")
+                LOG.error("Some error occurred in work")
                 return 600
             return energy_cooldown_time
 
