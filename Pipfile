@@ -12,8 +12,7 @@ setuptools = "<45.0.0"
 [packages]
 beautifulsoup4 = "*"
 html5lib = "*"
-pyppeteer = "*"
-websockets = "==6.0"
+pyppeteer2 = "*"
 
 [requires]
 python_version = "3.8"
