@@ -86,7 +86,6 @@ class RRBot(utils.aobject):
             await self.sleep(5)
 
     async def idle(self):
-        await self.browser.goto(Overview.url, waitUntil='networkidle0')
         await self.refresh()
         await self.check_login()
 
@@ -138,7 +137,7 @@ class RRBot(utils.aobject):
     async def sleep(self, sec=randint(10, 30)):
         if (sec >= 120):
             LOG.info("Wait for {:.1f} minutes".format(sec / 60.0))
-        await self.browser.wait_for(sec * 1000)
+        await asyncio.sleep(sec)
 
     async def get_soup(self):
         return BeautifulSoup(await self.browser.content(), "html5lib")
