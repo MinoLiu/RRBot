@@ -2,6 +2,20 @@ import argparse
 import logging
 from logging import handlers
 import asyncio
+import os
+import signal
+import psutil
+
+
+def kill_child_processes(parent_pid, sig=signal.SIGTERM):
+    try:
+        parent = psutil.Process(parent_pid)
+    except psutil.NoSuchProcess:
+        return
+    children = parent.children(recursive=True)
+
+    for process in children:
+        process.send_signal(sig)
 
 
 def initLog(profile):
@@ -58,7 +72,9 @@ async def main():
                 break
             except Exception as err:
                 LOG.error('Bot detect error: {}'.format(err))
-                await r.quit()
+                # Due to "browser.close" sometime not working, use kill child processes instead.
+                kill_child_processes(os.getpid())
+                # await r.quit()
                 LOG.info('Restarting...')
 
 

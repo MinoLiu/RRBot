@@ -56,9 +56,6 @@ class PoorBot(RRBot):
         return await self.do_work()
 
     async def idle(self):
-        await self.refresh()
-        await self.check_login()
-
         # work cooldown time
         work_c = 600
 

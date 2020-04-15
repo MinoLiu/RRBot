@@ -13,6 +13,7 @@ setuptools = "<45.0.0"
 beautifulsoup4 = "*"
 html5lib = "*"
 pyppeteer2 = "*"
+psutil = "*"
 
 [requires]
 python_version = "3.8"
