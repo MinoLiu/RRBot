@@ -67,6 +67,7 @@ $ ./rrbot.exe -l GOOGLE -p GOOGLE_ACCOUNT -u RRCash --headless
 - [x] Working
 - [x] Military training
 - [x] Purchase weapons and produce energy drinks
+- [ ] Fix pyppeteer freezing bug
 
 ### Requirement
 

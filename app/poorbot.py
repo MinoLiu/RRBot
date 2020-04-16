@@ -11,19 +11,19 @@ class PoorBot(RRBot):
 
     async def do_military_training(self) -> int:
         try:
-            await self.click(War.selector(), War.military_training_selector())
-            await self.click(War.military_training_selector(), War.send_ok_selector())
-            await self.click(War.send_ok_selector(), utils.close_selector())
-            await self.click(utils.close_selector())
+            await self.click(War.selector(), 1)
+            await self.click(War.military_training_selector(), 1)
+            await self.click(War.send_ok_selector(), 1)
+            await self.click(utils.close_selector(), 2)
             LOG.info("Military training completed")
-            await self.sleep(2)
         except Exception as err:
             LOG.error(err)
             LOG.error("Military training failed")
         return 3598
 
     async def do_work(self) -> int:
-        await self.click(Work.selector(), ".imp.yellow.tip")
+        await self.click(Work.selector(), 3)
+        await self.browser.wait_for(".imp.yellow.tip")
 
         soup = await self.get_soup()
         energy, energy_cooldown_time = Status.check_energy(soup)
@@ -35,15 +35,15 @@ class PoorBot(RRBot):
 
         if gold > 0 and energy >= 10:
             try:
-                await self.click(Work.work_selector(), utils.close_selector())
-                await self.click(utils.close_selector())
+                await self.click(Work.work_selector(), 3)
+                await self.click(utils.close_selector(), 3)
                 LOG.info("Work is completed {} energys use to work".format(energy))
             except Exception as err:
                 LOG.error(err)
                 LOG.error("Can not work, maybe the factory owner doesn't have enough money?")
                 return 600
         elif gold > 0 and energy_cooldown_time == 0:
-            await self.click(Status.energy_bar_selector())
+            await self.click(Status.energy_bar_selector(), 1)
         else:
             if gold == 0:
                 LOG.info("Region lack of gold")
