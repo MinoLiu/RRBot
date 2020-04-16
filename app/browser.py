@@ -4,8 +4,9 @@ from pyppeteer import launch
 
 class Browser(aobject):
 
-    async def __init__(self, headless=True, proxy=None):
-        self.browser = await launch({'headless': headless, 'args': [proxy] if proxy else []})
+    async def __init__(self, headless=True, proxy=None, **kwargs):
+        args = [proxy] if proxy else []
+        self.browser = await launch(headless=headless, args=args, **kwargs)
         self.page = (await self.browser.pages())[0]
 
     def set_default_navigation_timeout(self, ms):
