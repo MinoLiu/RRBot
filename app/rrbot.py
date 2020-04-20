@@ -99,7 +99,7 @@ class RRBot(utils.aobject):
 
         time = await self.calculate_perks_time()
         if time:
-            await self.sleep(21600 if time >= 21600 else time)
+            await self.sleep(3600 if time >= 3600 else time)
 
     async def click(self, selector: str, wait_for=None, wait_for_navigation=False, wait_for_sec=30):
         await self.browser.wait_for(selector, timeout=wait_for_sec * 1000)
@@ -114,6 +114,9 @@ class RRBot(utils.aobject):
                 self.browser.wait_for_navigation(waitUntil='networkidle0')
             ])
         elif wait_for:
+            if isinstance(wait_for, int):
+                wait_for *= 1000
+
             await asyncio.wait([
                 self.browser.query_selector_eval(selector, 'el => el.click()'),
                 self.sleep(1),
@@ -171,9 +174,14 @@ class RRBot(utils.aobject):
 
     async def upgrade(self, perk):
         selector = None
-        upgrade_selector = "#perk_target_4 > div[url='{}'] > div > div".format(
-            2 if self.use_to_upgrade == "GOLD" else 1
-        )
+
+        gold, _ = Status.check_money(await self.get_soup())
+
+        if self.use_to_upgrade == "GOLD" and gold >= 4320:
+            upgrade_selector = "#perk_target_4 > div[url='2'] > div > div"
+        else:
+            upgrade_selector = "#perk_target_4 > div[url='1'] > div > div"
+
         if perk == Perks.STR:
             selector = ".perk_item[perk='1']"
         elif perk == Perks.EDU:
@@ -227,8 +235,8 @@ class RRBot(utils.aobject):
         await self.click(Storage.selector(storage_id.value), 3)
         price, num = Storage.check_product_price(await self.get_soup())
         _, money = Status.check_money(await self.get_soup())
-        # Reserve 5 milion for upgrade
-        money -= 5000000
+        # Reserve 1 billion(1kkk) for upgrade perk
+        money -= 1000000000
 
         if money < price:
             return

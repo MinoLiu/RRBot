@@ -43,7 +43,7 @@ class PoorBot(RRBot):
                 LOG.error("Can not work, maybe the factory owner doesn't have enough money?")
                 return 600
         elif gold > 0 and energy_cooldown_time == 0:
-            await self.click(Status.energy_bar_selector(), 1)
+            await self.click(Status.energy_bar_selector(), 3)
         else:
             if gold == 0:
                 LOG.info("Region lack of gold")
@@ -63,11 +63,16 @@ class PoorBot(RRBot):
 
         await self.do_perks_upgrade()
 
-        if not is_traveling:
-            await self.do_storage_supply()
-            if war_c == 0:
-                await self.do_military_training()
-            work_c = await self.do_work()
+        if is_traveling:
+            await self.sleep(600)
+            return
+
+        await self.do_storage_supply()
+
+        if war_c == 0:
+            await self.do_military_training()
+
+        work_c = await self.do_work()
 
         war_c, _, _ = await self.check_overview()
         perk_c = await self.calculate_perks_time()

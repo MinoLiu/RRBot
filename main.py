@@ -34,7 +34,11 @@ async def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("-l", "--login_method", help="登入選項: 'GOOGLE'、'FB'、'VK'", dest='login_method')
     parser.add_argument(
-        "-u", "--use_to_upgrade", help="升級道具: 'RRCash'、'GOLD' 預設使用 RRCash", default='RRCash', dest='use_to_upgrade'
+        "-u",
+        "--use_to_upgrade",
+        help="升級道具: 'RRCash'、'GOLD' 預設使用 RRCash, 當金小於4320將會改用RRCash",
+        default='RRCash',
+        dest='use_to_upgrade'
     )
     parser.add_argument("-p", "--profile", help="帳戶profile: 預設為'default', 修改可更換帳戶", default='default', dest='profile')
 
@@ -74,7 +78,7 @@ async def main():
                 LOG.error('Bot detect error: {}'.format(err))
                 # Due to "browser.close" sometime not working, use kill child processes instead.
                 kill_child_processes(os.getpid())
-                # await r.quit()
+                await r.quit()
                 LOG.info('Restarting...')
 
 

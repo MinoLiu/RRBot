@@ -22,7 +22,7 @@ optional arguments:
   -l LOGIN_METHOD, --login_method LOGIN_METHOD
                         登入選項: 'GOOGLE'、'FB'、'VK'
   -u USE_TO_UPGRADE, --use_to_upgrade USE_TO_UPGRADE
-                        升級道具: 'RRCash'、'GOLD' 預設使用 RRCash
+                        升級道具: 'RRCash'、'GOLD' 預設使用 RRCash, 當金小於4320將會改用RRCash
   -p PROFILE, --profile PROFILE
                         帳戶profile: 預設為'default', 修改可更換帳戶
   --upgrade_perk UPGRADE_PERK
@@ -102,7 +102,7 @@ optional arguments:
   -l LOGIN_METHOD, --login_method LOGIN_METHOD
                         登入選項: 'GOOGLE'、'FB'、'VK'
   -u USE_TO_UPGRADE, --use_to_upgrade USE_TO_UPGRADE
-                        升級道具: 'RRCash'、'GOLD' 預設使用 RRCash
+                        升級道具: 'RRCash'、'GOLD' 預設使用 RRCash, 當金小於4320將會改用RRCash
   -p PROFILE, --profile PROFILE
                         帳戶profile: 預設為'default', 修改可更換帳戶
   --upgrade_perk UPGRADE_PERK
