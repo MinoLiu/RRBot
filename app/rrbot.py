@@ -102,8 +102,8 @@ class RRBot(utils.aobject):
         if time:
             await self.sleep(3600 if time >= 3600 else time)
 
-    async def click(self, selector: str, wait_for=None, wait_for_navigation=False, wait_for_sec=30):
-        await self.browser.wait_for(selector, timeout=wait_for_sec * 1000)
+    async def click(self, selector: str, wait_for=None, wait_for_navigation=False):
+        await self.browser.wait_for(selector)
 
         # IDK why it doesn't work
         #       await self.browser.click(selector)
@@ -121,7 +121,7 @@ class RRBot(utils.aobject):
             await asyncio.wait([
                 self.browser.query_selector_eval(selector, 'el => el.click()'),
                 self.sleep(1),
-                self.browser.wait_for(wait_for, timeout=wait_for_sec * 1000)
+                self.browser.wait_for(wait_for)
             ])
         else:
             await asyncio.wait([self.browser.query_selector_eval(selector, 'el => el.click()'), self.sleep(1)])
@@ -231,14 +231,14 @@ class RRBot(utils.aobject):
 
         return 0
 
-    async def buy_product(self, storage_id, amount):
+    async def buy_product(self, product, amount):
         """
         Must be #storage page
 
-        : Storage_id (Storage):   Storage.Bombers、.....
+        : product (Storage):   Storage.Bombers、.....
         : amount (int)
         """
-        await self.click(Storage.selector(storage_id.value), 3)
+        await self.click(Storage.selector(product.value), 3)
         price, num = Storage.check_product_price(await self.get_soup())
         _, money = Status.check_money(await self.get_soup())
         # Reserve 1 billion(1kkk) for upgrade perk
@@ -253,7 +253,7 @@ class RRBot(utils.aobject):
 
         await self.type('.storage_buy_input', str(amount))
         await self.click('.storage_buy_button', 3)
-        LOG.info("Market purchase: {}, {} pcs, total {}.".format(storage_id.name, amount, price * amount))
+        LOG.info("Market purchase: {}, {} pcs, total {}.".format(product.name, amount, price * amount))
 
     async def do_storage_supply(self):
         LOG.debug("Do storage supply")
@@ -275,13 +275,13 @@ class RRBot(utils.aobject):
             await self.click('.storage_produce_button', 3)
             LOG.info('Produced: energy drink {} pcs.'.format(amount))
 
-        # Buy Bombers
-        if int(soup.find("span", {"urlbar": str(Storage.Bombers.value)}).text.replace('.', '')) < 10000:
-            await self.buy_product(Storage.Bombers, 10000)
+        need_products = [(Storage.Bombers, 10000), (Storage.Moontanks, 10000), (Storage.Spacestations, 1280)]
 
-        # Buy Moon tanks
-        if int(soup.find("span", {"urlbar": str(Storage.Moontanks.value)}).text.replace('.', '')) < 10000:
-            await self.buy_product(Storage.Moontanks, 10000)
+        # Buy products
+        for pair in need_products:
+            product, number = pair
+            if int(soup.find("span", {"urlbar": str(product.value)}).text.replace('.', '')) < number:
+                await self.buy_product(product, number)
 
     async def do_perks_upgrade(self) -> int:
         LOG.debug("Do perks upgrade")
