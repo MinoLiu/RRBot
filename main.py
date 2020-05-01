@@ -5,6 +5,7 @@ import asyncio
 import os
 import signal
 import psutil
+from app import LOG
 
 
 def kill_child_processes(parent_pid, sig=signal.SIGTERM):
@@ -18,7 +19,7 @@ def kill_child_processes(parent_pid, sig=signal.SIGTERM):
         process.send_signal(sig)
 
 
-def initLog(profile):
+def initLog(profile, DEBUG=False):
     logging.basicConfig(
         level=logging.INFO,
         format='%(asctime)s %(levelname)s %(message)s',
@@ -28,6 +29,7 @@ def initLog(profile):
             handlers.RotatingFileHandler('{}.log'.format(profile), "w", 1024 * 1024 * 100, 3, "utf-8")
         ]
     )
+    LOG.setLevel(logging.DEBUG if DEBUG else logging.INFO)
 
 
 async def main():
@@ -60,25 +62,27 @@ async def main():
     if (args.login_method is None):
         parser.print_help()
     else:
-        initLog(args.profile)
-        from app import LOG
+        initLog(args.profile, DEBUG=False)
 
         while (True):
-            r = None
-            if args.poor is True:
-                from app.poorbot import PoorBot
-                r = await PoorBot(**vars(args))
-            else:
-                from app.rrbot import RRBot
-                r = await RRBot(**vars(args))
             try:
+                r = None
+                if args.poor is True:
+                    from app.poorbot import PoorBot
+                    r = await PoorBot(**vars(args))
+                else:
+                    from app.rrbot import RRBot
+                    r = await RRBot(**vars(args))
+
                 await r.start()
                 break
             except Exception as err:
-                LOG.error('Bot detect error: {}'.format(err))
+                LOG.debug('Bot detect error: {}'.format(err))
                 # Due to "browser.close" sometime not working, use kill child processes instead.
                 kill_child_processes(os.getpid())
-                await r.quit()
+                if r:
+                    await r.quit()
+
                 LOG.info('Restarting...')
 
 

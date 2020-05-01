@@ -1,4 +1,5 @@
 import pickle
+import random
 from random import randint
 from bs4 import BeautifulSoup
 
@@ -32,7 +33,7 @@ class RRBot(utils.aobject):
         if proxy:
             proxy = "--proxy-server={}".format(proxy)
 
-        self.browser = await Browser(headless, proxy)
+        self.browser = await Browser(headless, proxy, dumpio=True)
         self.browser.set_default_navigation_timeout(30000)
 
         self.login_method = login_method
@@ -130,6 +131,7 @@ class RRBot(utils.aobject):
         await self.browser.type(selector, text, delay=delay)
 
     async def refresh(self):
+        LOG.debug("refresh")
         await self.browser.reload(waitUntil='networkidle0')
 
     async def close(self):
@@ -147,13 +149,16 @@ class RRBot(utils.aobject):
         return BeautifulSoup(await self.browser.content(), "html5lib")
 
     async def check_login(self):
+        LOG.debug("check login")
         try:
             await self.browser.wait_for('() => {return c_html;}', timeout=10000)
-        except Exception as err:
-            LOG.debug(err)
+            LOG.debug("check login successed")
+        except Exception:
+            LOG.debug("check login failed")
             await self.login()
 
     async def login(self):
+        LOG.debug("Login")
         await self.browser.goto(self.uri, waitUntil='networkidle0')
         selectors = {
             'FB': '.sa_link[href*="facebook.com"]',
@@ -161,14 +166,15 @@ class RRBot(utils.aobject):
             'VK': '.sa_link[href*="vk.com"]'
         }
         try:
-            await self.browser.click(selectors[self.login_method]),
+            LOG.debug("Try login")
+            await self.browser.click(selectors[self.login_method])
             await self.browser.wait_for_response('https://rivalregions.com/', timeout=240000)
             await self.browser.wait_for('#chat input[name=name]', timeout=10000)
             name = await self.browser.query_selector_eval('#chat input[name=name]', 'node => node.value')
             LOG.info("Login success {}".format(name))
             await self.save_cookies()
         except Exception as err:
-            LOG.info(err)
+            LOG.debug(err)
 
         await self.check_login()
 
@@ -250,6 +256,7 @@ class RRBot(utils.aobject):
         LOG.info("Market purchase: {}, {} pcs, total {}.".format(storage_id.name, amount, price * amount))
 
     async def do_storage_supply(self):
+        LOG.debug("Do storage supply")
         await self.click(Storage.selector(), wait_for="span[action='leader/storage']")
 
         soup = BeautifulSoup((await self.browser.content()), "html5lib")
@@ -259,9 +266,9 @@ class RRBot(utils.aobject):
             await self.click(Storage.selector(Storage.Energydrink.value), 3)
             gold, _ = Status.check_money(await self.get_soup())
 
-            # 6 hours
-            amount = 10800
-            if gold < 1080:
+            # 6 hours ~ 24 hours
+            amount = random.randrange(10800, 43200, 1000)
+            if gold < amount / 10:
                 amount = gold * 10
 
             await self.type('.storage_produce_ammount', str(amount))
@@ -277,6 +284,7 @@ class RRBot(utils.aobject):
             await self.buy_product(Storage.Moontanks, 10000)
 
     async def do_perks_upgrade(self) -> int:
+        LOG.debug("Do perks upgrade")
         await self.click(Overview.selector(), wait_for='#chat input[name=name]')
         t = await self.calculate_perks_time()
         if t == 0:

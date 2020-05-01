@@ -5,7 +5,8 @@ from pyppeteer import launch
 class Browser(aobject):
 
     async def __init__(self, headless=True, proxy=None, **kwargs):
-        args = [proxy] if proxy else []
+        args = []
+        args += [proxy] if proxy else []
         self.browser = await launch(headless=headless, args=args, **kwargs)
         self.page = (await self.browser.pages())[0]
 
