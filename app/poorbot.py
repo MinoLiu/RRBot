@@ -17,7 +17,7 @@ class PoorBot(RRBot):
             await self.click(utils.close_selector(), 2)
             LOG.info("Military training completed")
         except Exception as err:
-            LOG.error(err)
+            LOG.debug(err)
             LOG.error("Military training failed")
         return 3598
 
@@ -39,13 +39,15 @@ class PoorBot(RRBot):
                 await self.click(utils.close_selector(), 3)
                 LOG.info("Work is completed {} energys use to work".format(energy))
             except Exception as err:
-                LOG.error(err)
+                LOG.debug(err)
                 LOG.error("Can not work, maybe the factory owner doesn't have enough money?")
                 return 600
-        elif gold > 0 and energy_cooldown_time == 0:
+        elif gold > 0 and energy_cooldown_time == 0 and int(self.perks['END'][0]) >= 50:
             await self.click(Status.energy_bar_selector(), 3)
         else:
-            if gold == 0:
+            if int(self.perks['END'][0]) < 50:
+                return 600
+            elif gold == 0:
                 LOG.info("Region lack of gold")
                 return 600
             elif energy >= 10 or energy_cooldown_time == 0:

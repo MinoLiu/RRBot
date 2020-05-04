@@ -205,29 +205,18 @@ class RRBot(utils.aobject):
     async def calculate_perks_time(self) -> int:
         soup = await self.get_soup()
 
+        self.perks['STR'] = [int(soup.find("div", {"perk": "1", "class": "perk_source_2"}).text), 0]
+        self.perks['EDU'] = [int(soup.find("div", {"perk": "2", "class": "perk_source_2"}).text), 0]
+        self.perks['END'] = [int(soup.find("div", {"perk": "3", "class": "perk_source_2"}).text), 0]
+
         countdown = soup.find("div", {"id": "perk_counter_2"})
         if countdown:
             return utils.convert_str_time(countdown.text)
 
         time_texts = soup.find_all("div", {"class": "perk_4"})
-        self.perks['STR'] = (
-            int(soup.find("div", {
-                "perk": "1",
-                "class": "perk_source_2"
-            }).text), utils.convert_str_time(time_texts[0].text.strip().split("$, ")[-1])
-        )
-        self.perks['EDU'] = (
-            int(soup.find("div", {
-                "perk": "2",
-                "class": "perk_source_2"
-            }).text), utils.convert_str_time(time_texts[2].text.strip().split("$, ")[-1])
-        )
-        self.perks['END'] = (
-            int(soup.find("div", {
-                "perk": "3",
-                "class": "perk_source_2"
-            }).text), utils.convert_str_time(time_texts[4].text.strip().split("$, ")[-1])
-        )
+        self.perks['STR'][1] = utils.convert_str_time(time_texts[0].text.strip().split("$, ")[-1])
+        self.perks['EDU'][1] = utils.convert_str_time(time_texts[2].text.strip().split("$, ")[-1])
+        self.perks['END'][1] = utils.convert_str_time(time_texts[4].text.strip().split("$, ")[-1])
 
         return 0
 
@@ -262,7 +251,7 @@ class RRBot(utils.aobject):
         soup = BeautifulSoup((await self.browser.content()), "html5lib")
 
         # Produce energy drink
-        if int(soup.find("span", {"urlbar": str(Storage.Energydrink.value)}).text.replace('.', '')) <= 10800:
+        if int(soup.find("span", {"urlbar": str(Storage.Energydrink.value)}).text.replace('.', '')) <= 3600:
             await self.click(Storage.selector(Storage.Energydrink.value), 3)
             gold, _ = Status.check_money(await self.get_soup())
 
@@ -271,9 +260,10 @@ class RRBot(utils.aobject):
             if gold < amount / 10:
                 amount = gold * 10
 
-            await self.type('.storage_produce_ammount', str(amount))
-            await self.click('.storage_produce_button', 3)
-            LOG.info('Produced: energy drink {} pcs.'.format(amount))
+            if amount > 300:
+                await self.type('.storage_produce_ammount', str(amount))
+                await self.click('.storage_produce_button', 3)
+                LOG.info('Produced: energy drink {} pcs.'.format(amount))
 
         need_products = [(Storage.Bombers, 10000), (Storage.Moontanks, 10000), (Storage.Spacestations, 1280)]
 
