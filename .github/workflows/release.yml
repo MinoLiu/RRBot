@@ -22,7 +22,7 @@ jobs:
 
       - name: Build windows binary
         run: |
-          pipenv run pyinstaller -F -n rrbot.exe --add-binary "chromedriver.exe;." main.py
+          pipenv run pyinstaller -F -n rrbot.exe main.py
 
       - name: Create Release
         id: create_release
