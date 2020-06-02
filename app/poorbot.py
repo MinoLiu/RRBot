@@ -79,4 +79,6 @@ class PoorBot(RRBot):
         war_c, _, _ = await self.check_overview()
         perk_c = await self.calculate_perks_time()
 
+        gold, money = Status.check_str_money(await self.get_soup())
+        LOG.info(f"Your property: {money} $   {gold} G")
         await self.sleep(min(perk_c, war_c, work_c))

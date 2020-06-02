@@ -14,8 +14,8 @@ A bot for RR
 
 ```
 $ ./rrbot.exe
-usage: rrbot.exe [-h] [-l LOGIN_METHOD] [-u USE_TO_UPGRADE] [-p PROFILE] [--upgrade_perk UPGRADE_PERK] [--poor] [--headless] [--proxy PROXY]
-               [--upgrade_strategy UPGRADE_STRATEGY]
+usage: rrbot.exe [-h] [-l LOGIN_METHOD] [-u USE_TO_UPGRADE] [-p PROFILE] [--poor] [--headless] [--proxy PROXY] [--upgrade_strategy UPGRADE_STRATEGY]
+               [--debug DEBUG]
 
 optional arguments:
   -h, --help            show this help message and exit
@@ -25,13 +25,12 @@ optional arguments:
                         升級道具: 'RRCash'、'GOLD' 預設使用 RRCash, 當金小於4320將會改用RRCash
   -p PROFILE, --profile PROFILE
                         帳戶profile: 預設為'default', 修改可更換帳戶
-  --upgrade_perk UPGRADE_PERK
-                        只升級指定的選項 'STR'、'EDU'、'END' 不指定將會使用upgrade_strategy
   --poor                你是窮人, 你買不起高級會員, 你必須手動挖礦、軍演, 可憐哪 我來幫你
   --headless            確定使用者有登入成功後可開啟 將瀏覽器GUI關閉節省資源
   --proxy PROXY         正確格式如下: socks5://localhost:1080, https://localhost:1080
   --upgrade_strategy UPGRADE_STRATEGY
                         三圍100後將按照時間比例來升級 default '2:1:1'
+  --debug DEBUG         開啟Debug mod
 ```
 
 #### 第一次使用請不要開啟 headless mode
@@ -93,8 +92,8 @@ Let `pipenv run python main.py` replace `rrbot.exe`
 
 ```
 $ pipenv run python main.py
-usage: main.py [-h] [-l LOGIN_METHOD] [-u USE_TO_UPGRADE] [-p PROFILE] [--upgrade_perk UPGRADE_PERK] [--poor] [--headless] [--proxy PROXY]
-               [--upgrade_strategy UPGRADE_STRATEGY]
+usage: main.py [-h] [-l LOGIN_METHOD] [-u USE_TO_UPGRADE] [-p PROFILE] [--poor] [--headless] [--proxy PROXY] [--upgrade_strategy UPGRADE_STRATEGY]
+               [--debug DEBUG]
 
 optional arguments:
   -h, --help            show this help message and exit
@@ -104,11 +103,10 @@ optional arguments:
                         升級道具: 'RRCash'、'GOLD' 預設使用 RRCash, 當金小於4320將會改用RRCash
   -p PROFILE, --profile PROFILE
                         帳戶profile: 預設為'default', 修改可更換帳戶
-  --upgrade_perk UPGRADE_PERK
-                        只升級指定的選項 'STR'、'EDU'、'END' 不指定將會使用upgrade_strategy
   --poor                你是窮人, 你買不起高級會員, 你必須手動挖礦、軍演, 可憐哪 我來幫你
   --headless            確定使用者有登入成功後可開啟 將瀏覽器GUI關閉節省資源
   --proxy PROXY         正確格式如下: socks5://localhost:1080, https://localhost:1080
   --upgrade_strategy UPGRADE_STRATEGY
                         三圍100後將按照時間比例來升級 default '2:1:1'
+  --debug DEBUG         開啟Debug mod
 ```

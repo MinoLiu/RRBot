@@ -44,10 +44,6 @@ async def main():
     )
     parser.add_argument("-p", "--profile", help="帳戶profile: 預設為'default', 修改可更換帳戶", default='default', dest='profile')
 
-    parser.add_argument(
-        "--upgrade_perk", help="只升級指定的選項 'STR'、'EDU'、'END' 不指定將會使用upgrade_strategy", dest='upgrade_perk'
-    )
-
     parser.add_argument("--poor", help="你是窮人, 你買不起高級會員, 你必須手動挖礦、軍演, 可憐哪 我來幫你", action="store_true")
 
     parser.add_argument("--headless", help="確定使用者有登入成功後可開啟 將瀏覽器GUI關閉節省資源", action="store_true", dest='headless')
@@ -57,12 +53,13 @@ async def main():
     parser.add_argument(
         "--upgrade_strategy", help="三圍100後將按照時間比例來升級 default '2:1:1'", default='2:1:1', dest="upgrade_strategy"
     )
+    parser.add_argument("--debug", help="開啟Debug mod", action="store_true")
 
     args = parser.parse_args()
     if (args.login_method is None):
         parser.print_help()
     else:
-        initLog(args.profile, DEBUG=False)
+        initLog(args.profile, DEBUG=args.debug)
 
         while (True):
             try:

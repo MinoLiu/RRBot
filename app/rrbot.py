@@ -20,11 +20,11 @@ class RRBot(utils.aobject):
         login_method="GOOGLE",
         use_to_upgrade="RRCash",
         profile="default",
-        upgrade_perk=None,
         upgrade_strategy="2:1:1",
         proxy=None,
         headless=None,
-        poor=None
+        poor=None,
+        debug=False
     ):
         self.profile = profile
 
@@ -45,15 +45,6 @@ class RRBot(utils.aobject):
             LOG.error("--upgrade_strategy invalid")
 
         self.perks = {'strategy': self.upgrade_strategy}
-
-        if upgrade_perk == "STR":
-            self.upgrade_perk = Perks.STR
-        elif upgrade_perk == "EDU":
-            self.upgrade_perk = Perks.EDU
-        elif upgrade_perk == "END":
-            self.upgrade_perk = Perks.END
-        else:
-            self.upgrade_perk = None
 
         await self.load_cookies()
 
@@ -100,6 +91,8 @@ class RRBot(utils.aobject):
 
         time = await self.calculate_perks_time()
         if time:
+            gold, money = Status.check_str_money(await self.get_soup())
+            LOG.info(f"Your property: {money} $   {gold} G")
             await self.sleep(3600 if time >= 3600 else time)
 
     async def click(self, selector: str, wait_for=None, wait_for_navigation=False):
@@ -183,7 +176,12 @@ class RRBot(utils.aobject):
 
         gold, _ = Status.check_money(await self.get_soup())
 
-        if self.use_to_upgrade == "GOLD" and gold >= 4320:
+        minimal_strategy = [i for i, v in enumerate(self.upgrade_strategy) if v == min(self.upgrade_strategy)]
+
+        if len(minimal_strategy) == 3:
+            minimal_strategy = []
+
+        if self.use_to_upgrade == "GOLD" and gold >= 4320 and perk in minimal_strategy:
             upgrade_selector = "#perk_target_4 > div[url='2'] > div > div"
         else:
             upgrade_selector = "#perk_target_4 > div[url='1'] > div > div"
@@ -277,12 +275,10 @@ class RRBot(utils.aobject):
         LOG.debug("Do perks upgrade")
         await self.click(Overview.selector(), wait_for='#chat input[name=name]')
         t = await self.calculate_perks_time()
+        LOG.debug(f'countdown {t/3600:.2f} hours')
         if t == 0:
-            if self.upgrade_perk is not None:
-                await self.upgrade(self.upgrade_perk)
-            else:
-                perk = Perks.perk_strategy(**self.perks)
-                await self.upgrade(perk)
+            perk = Perks.perk_strategy(**self.perks)
+            await self.upgrade(perk)
             return 600
         else:
             return t

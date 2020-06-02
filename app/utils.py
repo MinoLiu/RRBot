@@ -40,6 +40,10 @@ class Status:
         money = int(soup.find("span", {"id": "m"}).text.replace('.', ''))
         return gold, money
 
+    @staticmethod
+    def check_str_money(soup) -> (str, str):
+        return (soup.find("span", {"id": "g"}).text, soup.find("span", {"id": "m"}).text)
+
 
 class Overview:
     url = "https://rivalregions.com/#overview"
@@ -196,15 +200,19 @@ class Perks(Enum):
         return perk if perk is not None else Perks.STR
 
 
-def convert_str_time(t):
+def convert_str_time(t: str):
     """
-    : t: (str)    Format: 00:00:00 or 00:00
+    : t: (str)    Format: 00:00:00 or 00:00 or '1 d 00:00:00'
     """
     t = t.strip()
     if (len(t) == 8):
         return 3600 * int(t[0:2:1]) + 60 * int(t[3:5:1]) + int(t[6:8:1])
     elif (len(t) == 5):
         return 60 * int(t[0:2:1]) + int(t[3:5:1])
+    elif (len(t.split(' ')) >= 3):
+        day, _, _t = t.split(' ')
+
+        return int(day) * 3600 * 24 + convert_str_time(_t)
 
     raise AttributeError("'{}', Format Error".format(t))
 
