@@ -33,12 +33,15 @@ def initLog(profile, DEBUG=False):
 
 
 async def main():
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(formatter_class=argparse.RawTextHelpFormatter)
     parser.add_argument("-l", "--login_method", help="登入選項: 'GOOGLE'、'FB'、'VK'", dest='login_method')
     parser.add_argument(
         "-u",
         "--use_to_upgrade",
-        help="升級道具: 'RRCash'、'GOLD' 預設使用 RRCash, 當金小於4320將會改用RRCash",
+        help='''升級道具: 'RRCash'、'GOLD'、'GOLD1' 預設使用 RRCash
+        1. 'GOLD' 當GOLD小於4320將會改用RRCash
+        2. 'GOLD1' 同1，並且對於upgrade_strategy中的最小值會使用RRCash升級
+        例如: "2:1:1" STR將會使用GOLD, EDU, END將會使用RRCash 也就是窮人的選擇''',
         default='RRCash',
         dest='use_to_upgrade'
     )

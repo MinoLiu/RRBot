@@ -37,7 +37,11 @@ class RRBot(utils.aobject):
         self.browser.set_default_navigation_timeout(30000)
 
         self.login_method = login_method
-        self.use_to_upgrade = use_to_upgrade
+        if use_to_upgrade not in ['RRCash', 'GOLD', 'GOLD1']:
+            self.use_to_upgrade = 'RRCash'
+        else:
+            self.use_to_upgrade = use_to_upgrade
+
         try:
             self.upgrade_strategy = [int(x) for x in upgrade_strategy.split(':')]
             assert len(self.upgrade_strategy) == 3
@@ -181,7 +185,9 @@ class RRBot(utils.aobject):
         if len(minimal_strategy) == 3:
             minimal_strategy = []
 
-        if self.use_to_upgrade == "GOLD" and gold >= 4320 and perk in minimal_strategy:
+        if self.upgrade_strategy == 'RRCash' or gold <= 4320:
+            upgrade_selector = "#perk_target_4 > div[url='1'] > div > div"
+        elif self.use_to_upgrade == "GOLD" or (self.use_to_upgrade == "GOLD1" and perk not in minimal_strategy):
             upgrade_selector = "#perk_target_4 > div[url='2'] > div > div"
         else:
             upgrade_selector = "#perk_target_4 > div[url='1'] > div > div"

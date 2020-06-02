@@ -14,15 +14,18 @@ A bot for RR
 
 ```
 $ ./rrbot.exe
-usage: rrbot.exe [-h] [-l LOGIN_METHOD] [-u USE_TO_UPGRADE] [-p PROFILE] [--poor] [--headless] [--proxy PROXY] [--upgrade_strategy UPGRADE_STRATEGY]
-               [--debug DEBUG]
+usage: ./rrbot.exe [-h] [-l LOGIN_METHOD] [-u USE_TO_UPGRADE] [-p PROFILE] [--poor] [--headless] [--proxy PROXY] [--upgrade_strategy UPGRADE_STRATEGY]
+               [--debug]
 
 optional arguments:
   -h, --help            show this help message and exit
   -l LOGIN_METHOD, --login_method LOGIN_METHOD
                         登入選項: 'GOOGLE'、'FB'、'VK'
   -u USE_TO_UPGRADE, --use_to_upgrade USE_TO_UPGRADE
-                        升級道具: 'RRCash'、'GOLD' 預設使用 RRCash, 當金小於4320將會改用RRCash
+                        升級道具: 'RRCash'、'GOLD'、'GOLD1' 預設使用 RRCash
+                                1. 'GOLD' 當GOLD小於4320將會改用RRCash
+                                2. 'GOLD1' 同1，並且對於upgrade_strategy中的最小值會使用RRCash升級
+                                例如: "2:1:1" STR將會使用GOLD, EDU, END將會使用RRCash 也就是窮人的選擇
   -p PROFILE, --profile PROFILE
                         帳戶profile: 預設為'default', 修改可更換帳戶
   --poor                你是窮人, 你買不起高級會員, 你必須手動挖礦、軍演, 可憐哪 我來幫你
@@ -30,7 +33,7 @@ optional arguments:
   --proxy PROXY         正確格式如下: socks5://localhost:1080, https://localhost:1080
   --upgrade_strategy UPGRADE_STRATEGY
                         三圍100後將按照時間比例來升級 default '2:1:1'
-  --debug DEBUG         開啟Debug mod
+  --debug               開啟Debug mod
 ```
 
 #### 第一次使用請不要開啟 headless mode
@@ -93,14 +96,17 @@ Let `pipenv run python main.py` replace `rrbot.exe`
 ```
 $ pipenv run python main.py
 usage: main.py [-h] [-l LOGIN_METHOD] [-u USE_TO_UPGRADE] [-p PROFILE] [--poor] [--headless] [--proxy PROXY] [--upgrade_strategy UPGRADE_STRATEGY]
-               [--debug DEBUG]
+               [--debug]
 
 optional arguments:
   -h, --help            show this help message and exit
   -l LOGIN_METHOD, --login_method LOGIN_METHOD
                         登入選項: 'GOOGLE'、'FB'、'VK'
   -u USE_TO_UPGRADE, --use_to_upgrade USE_TO_UPGRADE
-                        升級道具: 'RRCash'、'GOLD' 預設使用 RRCash, 當金小於4320將會改用RRCash
+                        升級道具: 'RRCash'、'GOLD'、'GOLD1' 預設使用 RRCash
+                                1. 'GOLD' 當GOLD小於4320將會改用RRCash
+                                2. 'GOLD1' 同1，並且對於upgrade_strategy中的最小值會使用RRCash升級
+                                例如: "2:1:1" STR將會使用GOLD, EDU, END將會使用RRCash 也就是窮人的選擇
   -p PROFILE, --profile PROFILE
                         帳戶profile: 預設為'default', 修改可更換帳戶
   --poor                你是窮人, 你買不起高級會員, 你必須手動挖礦、軍演, 可憐哪 我來幫你
@@ -108,5 +114,5 @@ optional arguments:
   --proxy PROXY         正確格式如下: socks5://localhost:1080, https://localhost:1080
   --upgrade_strategy UPGRADE_STRATEGY
                         三圍100後將按照時間比例來升級 default '2:1:1'
-  --debug DEBUG         開啟Debug mod
+  --debug               開啟Debug mod
 ```
