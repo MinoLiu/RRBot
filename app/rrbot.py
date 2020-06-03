@@ -41,7 +41,7 @@ class RRBot(utils.aobject):
             self.use_to_upgrade = 'RRCash'
         else:
             self.use_to_upgrade = use_to_upgrade
-
+        LOG.info(f"Will use {self.use_to_upgrade} upgrade perks.")
         try:
             self.upgrade_strategy = [int(x) for x in upgrade_strategy.split(':')]
             assert len(self.upgrade_strategy) == 3
@@ -187,7 +187,7 @@ class RRBot(utils.aobject):
 
         if self.upgrade_strategy == 'RRCash' or gold <= 4320:
             upgrade_selector = "#perk_target_4 > div[url='1'] > div > div"
-        elif self.use_to_upgrade == "GOLD" or (self.use_to_upgrade == "GOLD1" and perk not in minimal_strategy):
+        elif self.use_to_upgrade == "GOLD" or (self.use_to_upgrade == "GOLD1" and perk.value not in minimal_strategy):
             upgrade_selector = "#perk_target_4 > div[url='2'] > div > div"
         else:
             upgrade_selector = "#perk_target_4 > div[url='1'] > div > div"
